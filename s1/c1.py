@@ -40,4 +40,15 @@ want = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
 
 got = hexToBase64(hex_input)
 
+print "the long way"
+print got
 print got == want
+
+#the easy way
+import base64
+
+print "the short way"
+conv_ascii = hex_input.decode("hex")
+b64out = base64.b64encode(conv_ascii)
+print b64out
+print b64out == want
