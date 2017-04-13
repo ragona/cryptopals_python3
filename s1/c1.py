@@ -1,4 +1,6 @@
 #Convert hex to base64
+
+#attempt 1
 #decoding myself to learn about the formats
 #using no imported libraries
 
@@ -40,10 +42,10 @@ want = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
 
 got = hexToBase64(hex_input)
 
-print "the long way"
 print got
 print got == want
 
+#attempt 2
 #the easy way
 import base64
 
@@ -52,3 +54,10 @@ conv_ascii = hex_input.decode("hex")
 b64out = base64.b64encode(conv_ascii)
 print b64out
 print b64out == want
+
+#attempt 3
+#the right way (and incidentally also the short way, I suppose)
+import binascii
+import base64
+
+print base64.b64encode(binascii.unhexlify(hex_input))
