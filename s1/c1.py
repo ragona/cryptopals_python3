@@ -8,7 +8,7 @@ base64table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
 #decodes hex and then encodes base64
 #this will first create a long string of binary patterns with 8 characters representing
-#each hexidecimal octet, and then go through this string six characters at a time and 
+#each hexidecimal octet, and then go through this string six bits at a time and 
 #convert them to an integer, and then use that integer as an index to the base 64 table
 #to replace them
 def hexToBase64(hs):
