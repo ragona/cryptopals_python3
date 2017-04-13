@@ -1,20 +1,30 @@
 #Convert hex to base64
-
+#decoding myself to learn about the formats
+#using no imported libraries
 
 base64table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
+#decodes hex and then encodes base64
+#this will first create a long string of binary patterns with 8 characters representing
+#each hexidecimal octet, and then go through this string six characters at a time and 
+#convert them to an integer, and then use that integer as an index to the base 64 table
+#to replace them
 def hexToBase64(hs):
-	#produce a long string of bit patterns representing each 2 character hex value
 	bit_string = ""
 	for i in range(0, len(hs) / 2):
-		#grab the specific two character hex value
-		bit_string += bitStringFromHexChar(hs[i * 2 : i * 2 + 2])
+		#grab the two character hex value (i.e. 4d)
+		hexChar = hs[i * 2 : i * 2 + 2]
+		#covert it to an int so we can format it as a bit pattern (4d -> 77)
+		intChar = int(hexChar, 16)
+		#format it as a bit pattern (i.e. 77, bin(77) is 1001101, we want 01001101
+		#if it was 1, we'd want 00000001; this ensures padding.)
+		bit_string += format(intChar, "08b")
 
 	#produce the encoded string
-	#TODO: make this pad correctly
+	#TODO: make this pad correctly for bit_string % 24 != 0
 	b64s = ""
 	for i in range(0, len(bit_string) / 6):
-		#grab the 6 bit crunk
+		#grab the 6 bit chunk
 		chunk = bit_string[i * 6 : i * 6 + 6]
 		#convert it to an int to get the right index in the base64 table
 		b64i = int(chunk, 2)
@@ -22,12 +32,7 @@ def hexToBase64(hs):
 		b64s += base64table[b64i]
 
 	return b64s
-
-def bitStringFromHexChar(hexChar):
-	#covert it to an int so we can format it as a bit pattern
-	intChar = int(hexChar, 16)
-	#format it as a bit pattern 
-	return format(intChar, "08b")
+	
 
 
 hex_input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
