@@ -18,15 +18,14 @@ import binascii
 a = '1c0111001f010100061a024b53535009181c'
 b = '686974207468652062756c6c277320657965'
 
+#unhexlify the strings, convert each char to an int, xor the ints
+#convert the resulting int back to a char, join it into a string
+#return the hexlified string
 def xorHexStrings(a, b):
         if len(a) != len(b):
                 raise Exception("buffers are not of equal length")
-        unhexedA = binascii.unhexlify(a)
-        unhexedB = binascii.unhexlify(b)
-        intListA = map(ord, unhexedA)
-        intListB = map(ord, unhexedB)
-        xoredInts = map(lambda pair: pair[0] ^ pair[1], zip(intListA, intListB))
-        joinedStr = "".join(map(chr, xoredInts))
-        return binascii.hexlify(joinedStr)
+        xorChars = lambda pair: ord(pair[0]) ^ ord(pair[1])
+        xored = map(xorChars, zip(binascii.unhexlify(a), binascii.unhexlify(b)))
+        return binascii.hexlify("".join(map(chr, xored)))
 
 print xorHexStrings(a, b)
