@@ -19,29 +19,26 @@ import binascii
 hex_string = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
 
 def xorStringAgainstKey(s, k):
-	ints = map(ord, s)
-	xord = [c ^ k for c in ints]
-	return "".join(map(chr, xord))
+        ints = map(ord, s)
+        xord = [c ^ k for c in ints]
+        return "".join(map(chr, xord))
 
 def scoreEnglishness(s):
-	score = 0
-	for c in s:
-		if ord(c) >= 65 and ord(c) <= 122:
-			score += 1
-		else:
-			score -= 1
-	return score
+        score = 0
+        for c in s:
+                score += 1 if str.isalpha(c) else -1
+        return score
 
 s = binascii.unhexlify(hex_string)
 best = ""
 bestScore = 0
 key = ""
 for i in range(255):
-	result = xorStringAgainstKey(s, i)
-	score = scoreEnglishness(result)
-	if score > bestScore:
-		bestScore = score
-		best = result
-		key = chr(i)
+        result = xorStringAgainstKey(s, i)
+        score = scoreEnglishness(result)
+        if score > bestScore:
+                bestScore = score
+                best = result
+                key = chr(i)
 
 print key, bestScore, best
