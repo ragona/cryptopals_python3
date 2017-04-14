@@ -46,7 +46,6 @@ with open("c4.txt") as f:
     lines = str.splitlines(data)
     best = ""
     bestScore = 0
-    key = ""
     for line in lines:
         lineResult = getMostEnglishDecryption(binascii.unhexlify(line))
         if lineResult[0] > bestScore:
