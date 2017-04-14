@@ -34,4 +34,4 @@ def encrypt(p, k):
 print encrypt(phrase, key) 
 
 #okay, the resulting string ALMOST matches the expected result 
-#but the wanted result has a break in, and I can't figure out why
+#but the wanted result has a newline in it, and I can't figure out why
