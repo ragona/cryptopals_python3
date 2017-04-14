@@ -7,7 +7,7 @@
 def hamming(a, b):
     diff = 0
     for i in range(len(a)):
-        diff += intCompare(ord(a[i]), ord(b[i]))
+        diff += char_bit_diff(a[i], b[i])
     return diff
 
 # just formats into 8 digit binary format 
@@ -16,15 +16,14 @@ def hamming(a, b):
 # tried a couple things here; this didn't seem like 
 # it'd be that fast, but it was somewhat faster than 
 # the other option I tried
-def intCompare(a, b):
+def char_bit_diff(a, b):
     diff = 0
-    sA = format(a, "08b")
-    sB = format(b, "08b")
+    sA = format(ord(a), "08b")
+    sB = format(ord(b), "08b")
     for i in range(8):
         if sA[i] != sB[i]:
             diff +=1
     return diff
-
 
 #===============
 # DECRYPTION 
