@@ -4,26 +4,14 @@
 # HAMMING DISTANCE 
 #=====================
 
-def hamming(a, b):
-    diff = 0
-    for i in range(len(a)):
-        diff += char_bit_diff(a[i], b[i])
-    return diff
 
-# just formats into 8 digit binary format 
-# then compares the strings to find the difference
-# i.e. "00000001" vs "10000000" would be a diff of 2
-# tried a couple things here; this didn't seem like 
-# it'd be that fast, but it was somewhat faster than 
-# the other option I tried
-def char_bit_diff(a, b):
-    diff = 0
-    sA = format(ord(a), "08b")
-    sB = format(ord(b), "08b")
-    for i in range(8):
-        if sA[i] != sB[i]:
-            diff +=1
-    return diff
+def hamming(a, b):
+    return sum([int_diff(i, j) for i, j in zip(a, b)])
+
+def int_diff(a, b):
+    j = bin(a)[2:].zfill(8)
+    k = bin(b)[2:].zfill(8)
+    return sum([x != y for x, y in zip(j, k)])
 
 #===============
 # DECRYPTION 
@@ -31,7 +19,7 @@ def char_bit_diff(a, b):
 
 def decypher():
     # Open the file 
-    f = open("c6.txt", "r")
+    f = open("c6.txt", "rb")
     d = f.read()
 
     # Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
@@ -41,7 +29,7 @@ def decypher():
     f.close()
 
 
-# print hamming("this is a test", "wokka wokka!!!")
+print(hamming(b"this is a test", b"wokka wokka!!!"))
 decypher()
 
 #=================
@@ -57,3 +45,4 @@ decypher()
 #         if nth(a, i) != nth(b, i):
 #             diff += 1
 #     return diff        
+
