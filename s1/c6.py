@@ -4,14 +4,19 @@
 # HAMMING DISTANCE 
 #=====================
 
-
+#add up the difference in the buffers one byte at a time
 def hamming(a, b):
-    return sum([int_diff(i, j) for i, j in zip(a, b)])
+    return sum([int_format_diff(i, j) for i, j in zip(a, b)])
 
-def int_diff(a, b):
+#make binary formatted strings of each int, compare the difference
+def int_format_diff(a, b):
     j = bin(a)[2:].zfill(8)
     k = bin(b)[2:].zfill(8)
     return sum([x != y for x, y in zip(j, k)])
+
+#thought this might be faster than the string compare -- it is not
+def bit_shift_compare(a, b):
+    return sum([(a>>i)&1 != (b>>i)&1 for i in range(8)])
 
 #===============
 # DECRYPTION 
@@ -31,18 +36,4 @@ def decypher():
 
 print(hamming(b"this is a test", b"wokka wokka!!!"))
 decypher()
-
-#=================
-# Note code below
-#=================
-
-# rejected (but functioning) option for comparing
-# binary diff between numbers 
-# def bitCompare(a, b):
-#     diff = 0
-#     nth = lambda x, n: (x>>n)&1
-#     for i in range(8):
-#         if nth(a, i) != nth(b, i):
-#             diff += 1
-#     return diff        
 
