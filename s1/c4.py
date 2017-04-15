@@ -15,35 +15,29 @@ Find it.
 import binascii
 
 # https://en.wikipedia.org/wiki/Letter_frequency
-freqTable = {"a": 8.16, "b": 1.49, "c": 2.78, "d": 4.25, "e": 12.70, "f": 2.22, "g": 2.01, "h": 6.09, "i": 6.96, "j": 0.15, "k": 0.77, "l": 4.02,
+freqTable = {" ": 13, "a": 8.16, "b": 1.49, "c": 2.78, "d": 4.25, "e": 12.70, "f": 2.22, "g": 2.01, "h": 6.09, "i": 6.96, "j": 0.15, "k": 0.77, "l": 4.02,
              "m": 2.40, "n": 6.74, "o": 7.50, "p": 1.92, "q": 0.09, "r": 5.98, "s": 6.32, "t": 9.05, "u": 2.75, "v": 0.97, "w": 2.36, "x": 0.15, "y": 1.97, "z": 0.07}
 
-def xorStringAgainstKey(s, k):
-    ints = map(ord, s)
-    xord = [c ^ k for c in ints]
-    return "".join(map(chr, xord))
+def singleCharXor(s, k):
+    return "".join([chr(c ^ k) for c in s])
 
 def scoreEnglishness(s):
-    score = 0
-    for c in s:
-        if c in freqTable:
-            score += freqTable[c]
-    return score
+    return sum([freqTable[c] if c in freqTable else 0 for c in s])
 
 def getMostEnglishDecryption(s):
     best = ""
     bestScore = 0
     for i in range(255):
-        result = xorStringAgainstKey(s, i)
+        result = singleCharXor(s, i)
         score = scoreEnglishness(result)
         if score > bestScore:
             bestScore = score
             best = result
     return [bestScore, best]
 
-with open("c4.txt") as f:
+with open("c4.txt", "rb") as f:
     data = f.read()
-    lines = str.splitlines(data)
+    lines = data.split(b'\n')
     best = ""
     bestScore = 0
     for line in lines:
@@ -51,4 +45,4 @@ with open("c4.txt") as f:
         if lineResult[0] > bestScore:
             bestScore = lineResult[0]
             best = lineResult[1]
-    print best
+    print(best)

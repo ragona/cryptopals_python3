@@ -15,17 +15,10 @@ If your function works properly, then when you feed it the string:
 
 import binascii
 
-a = '1c0111001f010100061a024b53535009181c'
-b = '686974207468652062756c6c277320657965'
+a = binascii.unhexlify(b'1c0111001f010100061a024b53535009181c')
+b = binascii.unhexlify(b'686974207468652062756c6c277320657965')
 
-#unhexlify the strings, convert each char to an int, xor the ints
-#convert the resulting int back to a char, join it into a string
-#return the hexlified string
-def xorHexStrings(a, b):
-        if len(a) != len(b):
-                raise Exception("buffers are not of equal length")
-        xorChars = lambda pair: ord(pair[0]) ^ ord(pair[1])
-        xored = map(xorChars, zip(binascii.unhexlify(a), binascii.unhexlify(b)))
-        return binascii.hexlify("".join(map(chr, xored)))
+def fixedXor(a, b):
+    return bytes([a[i] ^ b[i] for i in range(len(a))])
 
-print xorHexStrings(a, b)
+print(binascii.hexlify(fixedXor(a, b)))
