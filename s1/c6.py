@@ -57,8 +57,8 @@ def compare_sized_chunks(data, ks, n):
 # DECRYPTION 
 #===============
 
-def decypher():
-    f = open("c6.txt", "rb")
+def decypher(filename):
+    f = open(filename, "rb")
     d = base64.b64decode(f.read())
 
     #get edit distances for key sizes 2 to 40, return as tuple [keysize, edit distance]
@@ -104,7 +104,7 @@ def decypher():
     f.close()
 
 
-decypher()
+decypher("c6.txt")
 
 '''
 There's a file here. It's been base64'd after being encrypted with repeating-key XOR.
