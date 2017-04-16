@@ -84,11 +84,11 @@ def decypher():
     key = []
     for i, block in enumerate(blocks):
         print("BLOCK {}".format(i))
-        [print(key, scoreEnglishness(singleCharXor(block, key))) for key in range(30, 40)]
-        # key_results = [[key, scoreEnglishness(singleCharXor(block, key))] for key in range(1, 255)]
-        # key.append(sorted(key_results, key=lambda x: x[1])[-1:][0])
+        # [print(key, scoreEnglishness(singleCharXor(block, key))) for key in range(30, 40)]
+        key_results = [[key, scoreEnglishness(singleCharXor(block, key))] for key in range(1, 255)]
+        key.append(sorted(key_results, key=lambda x: x[1])[-1:][0])
 
-    # print(key)
+    print(key)
         
     # 8. For each block, the single-byte XOR key that 
     # produces the best looking histogram is the repeating-key 
