@@ -1,11 +1,21 @@
 #Break repeating-key XOR
 
-# Write a function to compute the edit distance/Hamming distance between two
-# strings. The Hamming distance is just the number of differing bits. 
+# https://en.wikipedia.org/wiki/Letter_frequency
+freqTable = {"a": 8.16, "b": 1.49, "c": 2.78, "d": 4.25, "e": 12.70, "f": 2.22, "g": 2.01, "h": 6.09, "i": 6.96, "j": 0.15, "k": 0.77, "l": 4.02,
+             "m": 2.40, "n": 6.74, "o": 7.50, "p": 1.92, "q": 0.09, "r": 5.98, "s": 6.32, "t": 9.05, "u": 2.75, "v": 0.97, "w": 2.36, "x": 0.15, "y": 1.97, "z": 0.07}
+
+def singleCharXor(s, k):
+    return "".join([chr(c ^ k) for c in s])
+
+def scoreEnglishness(s):
+    return sum([freqTable[c] if c in freqTable else 0 for c in s])
 
 #=====================
 # HAMMING DISTANCE 
 #=====================
+
+# Write a function to compute the edit distance/Hamming distance between two
+# strings. The Hamming distance is just the number of differing bits. 
 
 #add up the difference in the buffers one byte at a time
 def hamming(a, b):
@@ -22,7 +32,7 @@ def bit_shift_compare(a, b):
     return sum([(a>>i)&1 != (b>>i)&1 for i in range(8)])
 
 #===============
-# DECRYPTION 
+# EDIT DIST 
 #===============
 
 # For each KEYSIZE, take the first KEYSIZE worth of bytes, 
@@ -65,8 +75,21 @@ def decypher():
     # first byte of every block, and a block that is the 
     # second byte of every block, and so on.
 
-    # 7. Solve each block as if it was single-character XOR.
+    #3, 20, 4
+    blocks = [bytearray() for i in range(3)]
+    for i, b in enumerate(d):
+        blocks[i%3].append(b)
 
+    # 7. Solve each block as if it was single-character XOR.
+    key = []
+    for i, block in enumerate(blocks):
+        print("BLOCK {}".format(i))
+        [print(key, scoreEnglishness(singleCharXor(block, key))) for key in range(30, 40)]
+        # key_results = [[key, scoreEnglishness(singleCharXor(block, key))] for key in range(1, 255)]
+        # key.append(sorted(key_results, key=lambda x: x[1])[-1:][0])
+
+    # print(key)
+        
     # 8. For each block, the single-byte XOR key that 
     # produces the best looking histogram is the repeating-key 
     # XOR key byte for that block. Put them together and 
