@@ -89,6 +89,8 @@ def decypher():
         key.append(sorted(key_results, key=lambda x: x[1])[-1:][0])
 
     print(key)
+
+    #WHY IS THE SPACE THE BEST FOR ALL OF THEM :(
         
     # 8. For each block, the single-byte XOR key that 
     # produces the best looking histogram is the repeating-key 
