@@ -35,7 +35,7 @@ def getMostEnglishDecryption(s):
             best = result
     return [bestScore, best]
 
-with open("c4.txt", "rb") as f:
+with open("files/c4.txt", "rb") as f:
     data = f.read()
     lines = data.split(b'\n')
     best = ""

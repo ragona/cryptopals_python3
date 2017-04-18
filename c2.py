@@ -21,4 +21,5 @@ b = binascii.unhexlify(b'686974207468652062756c6c277320657965')
 def fixedXor(a, b):
     return bytes([a[i] ^ b[i] for i in range(len(a))])
 
-print(binascii.hexlify(fixedXor(a, b)))
+def test():
+    binascii.hexlify(fixedXor(a, b))
