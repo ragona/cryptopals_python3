@@ -24,7 +24,7 @@ def find_ecb(file, size):
     [print(x) for x in sorted([ecb_line[i:i+size] for i in range(0, len(ecb_line), size)])]
     print("==================")
 
-find_ecb("c8.txt", 32)
+find_ecb("files/c8.txt", 32)
 
 '''
 Detect AES in ECB mode

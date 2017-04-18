@@ -2,7 +2,7 @@ from Crypto.Cipher import AES
 from Crypto import Random
 import base64
 
-f = open("c7.txt", "rb")
+f = open("files/c7.txt", "rb")
 d = base64.b64decode(f.read())
 
 cipher = AES.new(b'YELLOW SUBMARINE', AES.MODE_ECB)

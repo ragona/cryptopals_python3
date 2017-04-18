@@ -104,7 +104,7 @@ def decypher(filename):
     f.close()
 
 
-decypher("c6.txt")
+decypher("files/c6.txt")
 
 '''
 There's a file here. It's been base64'd after being encrypted with repeating-key XOR.
