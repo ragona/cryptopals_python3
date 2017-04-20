@@ -2,13 +2,18 @@ import binascii
 from Crypto.Cipher import AES
 from Crypto import Random
 
+block_size = 16
 
 with open('files/c10.txt', 'rb') as f:
-    lines = f.read().splitlines()
-    aes = AES.new(b'YELLOW SUBMARINE', AES.MODE_ECB, '0' * 16)
-    a = aes.decrypt(lines[0][:16])
-    print(a)
-    # for line in lines:
+    d = f.read()
+
+    iv = '0' * block_size
+    result = ''
+    for i in range(0, len(d), block_size):
+        aes = AES.new(b'YELLOW SUBMARINE', AES.MODE_ECB, iv)
+        block = d[i : i + block_size]
+        print("".join([chr(c) for c in aes.decrypt(block)]))
+        iv = block
 
 
 
