@@ -1,13 +1,13 @@
 from Crypto.Cipher import AES
 from Crypto import Random
+from pals import utils
+
+
 import base64
 
-f = open("files/c7.txt", "rb")
-d = base64.b64decode(f.read())
+with open('files/c7.txt', 'rb') as f:
+    print(utils.aes_ecb_decrypt(base64.b64decode(f.read()), b'YELLOW SUBMARINE', b''))
 
-cipher = AES.new(b'YELLOW SUBMARINE', AES.MODE_ECB)
-
-print(cipher.decrypt(d))
 
 '''
 AES in ECB mode

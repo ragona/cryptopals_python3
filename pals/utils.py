@@ -1,3 +1,6 @@
+from Crypto.Cipher import AES
+from Crypto import Random
+
 #=====================
 # XOR AND SCORING 
 #=====================
@@ -59,3 +62,14 @@ def compare_sized_chunks(data, ks, n):
         b = data[y : y + ks]
         diff += hamming(a, b)
     return (diff / n) / ks
+
+
+#================
+# CRYPTO
+#================
+
+def aes_ecb_decrypt(block, key, iv):
+    return AES.new(key, AES.MODE_ECB, iv).decrypt(block)
+
+def aes_ecb_encrypt(block, key, iv):
+    return AES.new(key, AES.MODE_ECB, iv).encrypt(block)

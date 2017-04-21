@@ -8,12 +8,15 @@ with open('files/c10.txt', 'rb') as f:
     d = f.read()
 
     iv = '0' * block_size
-    result = ''
+    result = bytearray()
     for i in range(0, len(d), block_size):
         aes = AES.new(b'YELLOW SUBMARINE', AES.MODE_ECB, iv)
         block = d[i : i + block_size]
-        print("".join([chr(c) for c in aes.decrypt(block)]))
-        iv = block
+        cipher = aes.decrypt(block)
+        iv = cipher
+        result.append(result)
+    print(result)
+
 
 
 
