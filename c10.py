@@ -17,7 +17,7 @@ with open('files/c10.txt', 'rb') as f:
     dec = utils.aes_cbc_decrypt(data, key, iv)
     enc = utils.aes_cbc_encrypt(dec, key, iv)
     print(dec) #make sure the decrypt is intelligible 
-    print(enc == data) #make sure my encryption matches the file
+    print("encrypt matches file? {}".format(enc == data))
 
 
 
