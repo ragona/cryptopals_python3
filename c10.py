@@ -13,14 +13,11 @@ key = b'YELLOW SUBMARINE'
 iv = b'0' * block_size
 
 with open('files/c10.txt', 'rb') as f:
-    data = f.read()
-    # data = base64.b64decode(f.read())
-    # data = b'banana'
-    enc = utils.aes_cbc_encrypt(data, key, iv)
-    dec = utils.aes_cbc_decrypt(enc, key, iv)
-    for line in dec.splitlines():
-        print(line)
-
+    data = base64.b64decode(f.read())
+    dec = utils.aes_cbc_decrypt(data, key, iv)
+    enc = utils.aes_cbc_encrypt(dec, key, iv)
+    print(dec) #make sure the decrypt is intelligible 
+    print(enc == data) #make sure my encryption matches the file
 
 
 
