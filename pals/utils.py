@@ -68,8 +68,29 @@ def compare_sized_chunks(data, ks, n):
 # CRYPTO
 #================
 
-def aes_ecb_decrypt(block, key, iv):
-    return AES.new(key, AES.MODE_ECB, iv).decrypt(block)
+def aes_ecb_encrypt(data, key, iv):
+    return AES.new(key, AES.MODE_ECB, iv).encrypt(data)
 
-def aes_ecb_encrypt(block, key, iv):
-    return AES.new(key, AES.MODE_ECB, iv).encrypt(block)
+def aes_ecb_decrypt(data, key, iv):
+    return AES.new(key, AES.MODE_ECB, iv).decrypt(data)
+
+def aes_cbc_encrypt(data, key, iv):
+    block_size = len(iv)
+    results = bytes()
+    ciphertext = iv
+    for i in range(0, len(data), block_size):
+        plaintext = pad(data[i : i + block_size], block_size)
+        xord = bytes([plaintext[i] ^ ciphertext[i] for i in range(block_size)]) 
+        ciphertext = aes_ecb_encrypt(xord, key, ciphertext)
+        results += ciphertext
+    return results
+
+def aes_cbc_decrypt(data, key, iv):
+    return AES.new(key, AES.MODE_CBC, iv).decrypt(data)
+
+#================
+# CRYPTO
+#================
+
+def pad(block, size):
+    return bytes([block[i] if i < len(block) else 0x4 for i in range(size)])

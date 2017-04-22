@@ -1,21 +1,24 @@
 import binascii
+import base64
 from Crypto.Cipher import AES
 from Crypto import Random
+from pals import utils
+
+a = utils.pad(b"YELLOW SUBMARINE", 16)
+b = utils.aes_ecb_encrypt(a, b'YELLOW SUBMARINE', b'00000')
+c = utils.aes_ecb_decrypt(b, b'YELLOW SUBMARINE', b'00000')
 
 block_size = 16
+key = b'YELLOW SUBMARINE'
+iv = b'0' * block_size
 
 with open('files/c10.txt', 'rb') as f:
-    d = f.read()
+    data = b"banana"#f.read()
+    enc = utils.aes_cbc_encrypt(data, key, iv)
+    dec = utils.aes_cbc_decrypt(enc, key, iv)
+    for line in dec.splitlines():
+        print(line)
 
-    iv = '0' * block_size
-    result = bytearray()
-    for i in range(0, len(d), block_size):
-        aes = AES.new(b'YELLOW SUBMARINE', AES.MODE_ECB, iv)
-        block = d[i : i + block_size]
-        cipher = aes.decrypt(block)
-        iv = cipher
-        result.append(result)
-    print(result)
 
 
 
