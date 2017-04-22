@@ -75,13 +75,14 @@ def aes_ecb_decrypt(data, key, iv):
     return AES.new(key, AES.MODE_ECB, iv).decrypt(data)
 
 def aes_cbc_encrypt(data, key, iv):
+    cipher = AES.new(key, AES.MODE_ECB)
     block_size = len(iv)
     results = bytes()
     ciphertext = iv
     for i in range(0, len(data), block_size):
         plaintext = pad(data[i : i + block_size], block_size)
         xord = bytes([plaintext[i] ^ ciphertext[i] for i in range(block_size)]) 
-        ciphertext = aes_ecb_encrypt(xord, key, ciphertext)
+        ciphertext = cipher.encrypt(xord)
         results += ciphertext
     return results
 
