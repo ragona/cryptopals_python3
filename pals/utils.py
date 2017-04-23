@@ -1,5 +1,6 @@
 from Crypto.Cipher import AES
 from Crypto import Random
+import itertools
 
 #=====================
 # XOR AND SCORING 
@@ -69,7 +70,9 @@ def compare_sized_chunks(data, ks, n):
 #================
 
 def aes_ecb_encrypt(data, key, iv):
-    return AES.new(key, AES.MODE_ECB, iv).encrypt(data)
+    data = pad(data, (len(data) // 16 + 1) * 16)
+    aes = AES.new(key, AES.MODE_ECB, iv)
+    return aes.encrypt(data)
 
 def aes_ecb_decrypt(data, key, iv):
     return AES.new(key, AES.MODE_ECB, iv).decrypt(data)
@@ -90,7 +93,19 @@ def aes_cbc_decrypt(data, key, iv):
     return AES.new(key, AES.MODE_CBC, iv).decrypt(data)
 
 #================
-# CRYPTO
+# DETECTION
+#================
+
+#if any N bytes are the same it's probably ecb 
+#with repeating data
+def detect_ecb(data, size):
+    blocks = [data[i:i+size] for i in range(0, len(data), size)]
+    combos = itertools.combinations(blocks, 2)
+    score = sum([c[0] == c[1] for c in combos])
+    return score > 0 
+
+#================
+# PADDING
 #================
 
 def pad(block, size):
