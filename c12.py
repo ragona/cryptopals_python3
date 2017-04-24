@@ -1,3 +1,46 @@
+from Crypto import Random
+from pals import utils
+import base64
+
+b64unknown = b'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK'
+rand_key = Random.get_random_bytes(16)
+unknown = base64.b64decode(b64unknown)
+def solve_unknown():
+    #get blocksize
+    blocksize = 0
+    for i in range(64):
+        known = (b'A' * i) * 2
+        plaintext = known + unknown
+        enc = utils.aes_ecb_encrypt(plaintext, rand_key, b'0'*16)
+        if utils.detect_ecb(enc):
+            blocksize = i
+            break
+    #asdasd
+    solved = []
+    pad = b'A' * blocksize
+    for i in range(blocksize):
+        print(i)
+        for j in range(64,100):
+            a = pad[1:] + bytes([j])
+            b = pad[1:]
+            # print("a", a)
+            # print("b", b)
+            data = a + b + unknown
+            cipher = utils.aes_ecb_encrypt(data, rand_key, b'0'*16)    
+            print(len(cipher))
+            x = cipher[i:i+blocksize]
+            y = cipher[i+blocksize:i+blocksize+blocksize]
+            if x == y:
+                print('found one', bytes([j]), a)
+                solved.append(bytes([j])) 
+                pad = a
+                break
+    print(pad)
+    print(b"".join(solved))
+        
+    # blocks = utils.get_blocks()
+
+solve_unknown()
 '''
 Byte-at-a-time ECB decryption (Simple)
 Copy your oracle function to a new function that encrypts 
