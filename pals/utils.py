@@ -98,7 +98,7 @@ def aes_cbc_decrypt(data, key, iv):
 
 #if any N bytes are the same it's probably ecb 
 #with repeating data
-def detect_ecb(data, size):
+def detect_ecb(data, size=16):
     blocks = [data[i:i+size] for i in range(0, len(data), size)]
     combos = itertools.combinations(blocks, 2)
     score = sum([c[0] == c[1] for c in combos])
@@ -110,3 +110,9 @@ def detect_ecb(data, size):
 
 def pad(block, size):
     return bytes([block[i] if i < len(block) else 0x4 for i in range(size)])
+
+#================
+# GET BLOCKS
+#================
+def get_blocks(data, size):
+    return [data[i:i+size] for i in range(0, len(data), size)]
