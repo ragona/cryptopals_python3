@@ -18,29 +18,29 @@ def solve_unknown():
     #asdasd
     solved = []
     pad = b'A' * blocksize
-    for i in range(blocksize):
-        print(i)
-        for j in range(64,100):
+    for i in range(16):
+        print(i, pad)
+        for j in range(0,255):
             a = pad[1:] + bytes([j])
-            b = pad[1:]
-            # print("a", a)
-            # print("b", b)
-            data = a + b + unknown
-            cipher = utils.aes_ecb_encrypt(data, rand_key, b'0'*16)    
-            print(len(cipher))
-            x = cipher[i:i+blocksize]
-            y = cipher[i+blocksize:i+blocksize+blocksize]
+            b = pad[1 + i:]
+            # print(a, b)
+            cipher = utils.aes_ecb_encrypt(a + b + unknown, rand_key, b'0'*16)    
+            #this isn't going to match because the first 16
+            #and the second 16 aren't the same
+            x = cipher[0:blocksize]
+            y = cipher[blocksize:blocksize+blocksize]
             if x == y:
                 print('found one', bytes([j]), a)
-                solved.append(bytes([j])) 
+                print(a, b, len(a), len(b))
+                solved.append(bytes([j]))
                 pad = a
                 break
-    print(pad)
+    # print(pad)
     print(b"".join(solved))
-        
     # blocks = utils.get_blocks()
 
 solve_unknown()
+
 '''
 Byte-at-a-time ECB decryption (Simple)
 Copy your oracle function to a new function that encrypts 
