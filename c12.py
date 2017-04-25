@@ -5,6 +5,7 @@ import base64
 b64unknown = b'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK'
 rand_key = Random.get_random_bytes(16)
 unknown = base64.b64decode(b64unknown)
+
 def solve_unknown():
     #get blocksize
     blocksize = 0
@@ -16,28 +17,21 @@ def solve_unknown():
             blocksize = i
             break
     #asdasd
-    solved = []
+    solved = b''
     pad = b'A' * blocksize
     for i in range(16):
-        print(i, pad)
+        pad = b'A' * (blocksize - 1 - len(solved))
+        cipher = utils.aes_ecb_encrypt(pad + unknown, rand_key, b'0'*16)
+        print(i, pad, len(pad))
+        results = {}
         for j in range(0,255):
-            a = pad[1:] + bytes([j])
-            b = pad[1 + i:]
-            # print(a, b)
-            cipher = utils.aes_ecb_encrypt(a + b + unknown, rand_key, b'0'*16)    
-            #this isn't going to match because the first 16
-            #and the second 16 aren't the same
-            x = cipher[0:blocksize]
-            y = cipher[blocksize:blocksize+blocksize]
-            if x == y:
-                print('found one', bytes([j]), a)
-                print(a, b, len(a), len(b))
-                solved.append(bytes([j]))
-                pad = a
-                break
-    # print(pad)
-    print(b"".join(solved))
-    # blocks = utils.get_blocks()
+            test = utils.aes_ecb_encrypt(pad + solved + bytes([j]) + unknown, rand_key, b'0'*16)    
+            block = test[0:blocksize]
+            results[block] = bytes([j])
+        if cipher[0:blocksize] in results:
+            solved += results[cipher[0:blocksize]]
+
+    print(solved)
 
 solve_unknown()
 
