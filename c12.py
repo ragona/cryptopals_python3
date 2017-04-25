@@ -19,7 +19,7 @@ def solve_unknown():
     #asdasd
     solved = b''
     pad = b'A' * blocksize
-    for i in range(16):
+    for i in range(32):
         pad = b'A' * (blocksize - 1 - len(solved))
         cipher = utils.aes_ecb_encrypt(pad + unknown, rand_key, b'0'*16)
         print(i, pad, len(pad))
