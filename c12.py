@@ -12,25 +12,26 @@ def solve_unknown():
     for i in range(64):
         known = (b'A' * i) * 2
         plaintext = known + unknown
-        enc = utils.aes_ecb_encrypt(plaintext, rand_key, b'0'*16)
+        enc = utils.aes_ecb_encrypt(plaintext, rand_key)
         if utils.detect_ecb(enc):
             blocksize = i
             break
-    #asdasd
+    #solve
     solved = b''
     pad = b'A' * blocksize
-    for i in range(32):
-        pad = b'A' * (blocksize - 1 - len(solved))
-        cipher = utils.aes_ecb_encrypt(pad + unknown, rand_key, b'0'*16)
-        print(i, pad, len(pad))
+    while True:
+        pad = b'A' * (blocksize - 1 - (len(solved) % blocksize))
+        size = len(pad) + len(solved) + 1
         results = {}
         for j in range(0,255):
-            test = utils.aes_ecb_encrypt(pad + solved + bytes([j]) + unknown, rand_key, b'0'*16)    
-            block = test[0:blocksize]
-            results[block] = bytes([j])
-        if cipher[0:blocksize] in results:
-            solved += results[cipher[0:blocksize]]
-
+            test = utils.aes_ecb_encrypt(pad + solved + bytes([j]) + unknown, rand_key)    
+            results[test[0:size]] = bytes([j])
+        cipher = utils.aes_ecb_encrypt(pad + unknown, rand_key)
+        chunk = cipher[0:size]
+        if chunk in results:
+            solved += results[chunk]
+        else:
+            break
     print(solved)
 
 solve_unknown()
