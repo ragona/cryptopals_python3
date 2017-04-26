@@ -10,7 +10,7 @@ def encryption_oracle(data):
     ciphertext = bytes()
     if random.getrandbits(1):
         print('ecb')
-        ciphertext = utils.aes_ecb_encrypt(data, key, b'0' * 16)
+        ciphertext = utils.aes_ecb_encrypt(data, key)
     else:
         print('cbc')
         ciphertext = utils.aes_cbc_encrypt(data, key, b'0' * 16)

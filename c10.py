@@ -5,8 +5,8 @@ from Crypto import Random
 from pals import utils
 
 a = utils.pad(b"YELLOW SUBMARINE", 16)
-b = utils.aes_ecb_encrypt(a, b'YELLOW SUBMARINE', b'00000')
-c = utils.aes_ecb_decrypt(b, b'YELLOW SUBMARINE', b'00000')
+b = utils.aes_ecb_encrypt(a, b'YELLOW SUBMARINE')
+c = utils.aes_ecb_decrypt(b, b'YELLOW SUBMARINE')
 
 block_size = 16
 key = b'YELLOW SUBMARINE'

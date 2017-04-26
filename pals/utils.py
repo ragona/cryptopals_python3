@@ -69,13 +69,13 @@ def compare_sized_chunks(data, ks, n):
 # CRYPTO
 #================
 
-def aes_ecb_encrypt(data, key, iv):
+def aes_ecb_encrypt(data, key):
     data = pad(data, (len(data) // 16 + 1) * 16)
-    aes = AES.new(key, AES.MODE_ECB, iv)
+    aes = AES.new(key, AES.MODE_ECB)
     return aes.encrypt(data)
 
-def aes_ecb_decrypt(data, key, iv):
-    return AES.new(key, AES.MODE_ECB, iv).decrypt(data)
+def aes_ecb_decrypt(data, key):
+    return AES.new(key, AES.MODE_ECB).decrypt(data)
 
 def aes_cbc_encrypt(data, key, iv):
     cipher = AES.new(key, AES.MODE_ECB)

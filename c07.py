@@ -6,7 +6,7 @@ from pals import utils
 import base64
 
 with open('files/c7.txt', 'rb') as f:
-    print(utils.aes_ecb_decrypt(base64.b64decode(f.read()), b'YELLOW SUBMARINE', b''))
+    print(utils.aes_ecb_decrypt(base64.b64decode(f.read()), b'YELLOW SUBMARINE'))
 
 
 '''
