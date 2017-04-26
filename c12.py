@@ -6,28 +6,45 @@ b64unknown = b'Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpc
 rand_key = Random.get_random_bytes(16)
 unknown = base64.b64decode(b64unknown)
 
+def black_box(user_input):
+    return utils.aes_ecb_encrypt(user_input + unknown, rand_key)
+
 def solve_unknown():
-    #get blocksize
+    #get blocksize by shoving a bunch of identical
+    #bytes into the function and seeing if we can
+    #detect ECB, along with the blocksize used
     blocksize = 0
     for i in range(64):
-        known = (b'A' * i) * 2
-        plaintext = known + unknown
-        enc = utils.aes_ecb_encrypt(plaintext, rand_key)
-        if utils.detect_ecb(enc):
+        pad = (b'A' * i) * 2
+        if utils.detect_ecb(black_box(pad)):
             blocksize = i
             break
-    #solve
+    
+    #we're gonna read the unknown portion by eating 
+    #into it one byte at a time by sending in known
+    #input plus appropriately sized padding such 
+    #that we can randomize the very last byte 
     solved = b''
     pad = b'A' * blocksize
     while True:
+        #pad is the empty bytes at the front
         pad = b'A' * (blocksize - 1 - (len(solved) % blocksize))
+        #overall size will be multiple of blocksize, including 
+        #the one extra byte that we'll be randomizing
         size = len(pad) + len(solved) + 1
         results = {}
+        #send (pad + solved + char) into the box, store 
+        #the first 'size' bytes in our results dict keyed
+        #to the single byte that we used to get the result
         for j in range(0,255):
-            test = utils.aes_ecb_encrypt(pad + solved + bytes([j]) + unknown, rand_key)    
+            test = black_box(pad + solved + bytes([j])) 
             results[test[0:size]] = bytes([j])
-        cipher = utils.aes_ecb_encrypt(pad + unknown, rand_key)
-        chunk = cipher[0:size]
+        #send JUST the pad into the black box but test 
+        #the same number of bytes off the front of the
+        #result against the results table and see if 
+        #we have the a matching result in our dict 
+        pad_only = black_box(pad)
+        chunk = pad_only[0:size]
         if chunk in results:
             solved += results[chunk]
         else:
