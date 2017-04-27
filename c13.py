@@ -38,7 +38,7 @@ def black_box(user_input):
 #padding, then make sure that the first two params
 #('email' and 'uid') are neatly contained within
 #two 16 byte blocks, and then just append the admin
-#block to that 'real' user. this method will then 
+#block to that 'real' user. parse method will then 
 #just strip off the padding at the end, and we have
 #an admin user.
 
