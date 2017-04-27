@@ -1,3 +1,37 @@
+from Crypto import Random
+from pals import utils
+import re
+
+def kv_parse(s):
+    fields = s.split('&')
+    pairs = [f.split('=') for f in fields]
+    return {p[0]:p[1] for p in pairs}
+
+def kv_encode(d):
+    pairs = []
+    for key, value in d.items():
+        pairs.append('{}={}'.format(key, value))
+    return "&".join(pairs)
+
+def profile_for(email):
+    email = re.sub("[&=?]", "", email)
+    return kv_encode({
+        "email": email,
+        "uid": 10,
+        "role": 'user'
+    })
+
+
+random_key = Random.get_random_bytes(16) 
+
+def black_box(user_input):
+    return utils.aes_ecb_encrypt(bytes(profile_for(user_input), 'ascii'), random_key)
+
+print(black_box("foo@bar.com"))
+
+
+
+
 
 '''
 ECB cut-and-paste
