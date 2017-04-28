@@ -28,12 +28,25 @@ import base64
 import random
 
 rand_key = Random.get_random_bytes(16)
-prefix = Random.get_random_bytes(random.randrange(6, 20))
-unknown = "this is the good stuff"
+prefix = Random.get_random_bytes(random.randrange(24, 150))
+unknown = b'this is the good stuff'
 
 def black_box(user_input):
     return utils.aes_ecb_encrypt(prefix + user_input + unknown, rand_key)
 
+# send in no input then single byte  
+# and see which block of the return  
+# changes; this block contains the 
+# edge of the suffix   
+def last_suffix_block():
+    a = utils.get_blocks(black_box(b''), 16)
+    b = utils.get_blocks(black_box(b'A'), 16)
+    for i in range(len(a)):
+        if a[i] != b[i]:
+            return i
+    return -1
+
+suffix_edge = last_suffix_block()
 
 '''
 Byte-at-a-time ECB decryption (Harder)
