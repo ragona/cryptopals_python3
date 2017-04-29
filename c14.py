@@ -29,54 +29,15 @@ import base64
 import random
 
 rand_key = Random.get_random_bytes(16)
-l = 15#random.randrange(24, 150)
-prefix = Random.get_random_bytes(l)
+prefix = Random.get_random_bytes(random.randrange(0, 150))
 unknown = b'this is the good stuff'
 
 def black_box(user_input):
     return utils.aes_ecb_encrypt(prefix + user_input + unknown, rand_key)
 
-# send in no input then single byte  
-# and see which block of the return  
-# changes; this block contains the 
-# edge of the prefix
+result = utils.ecb_byte_aat(black_box)
 
-def prefix_length():
-    a = last_prefix_block()
-    b = prefix_tail_length(16)
-
-    return a + b
-
-def last_prefix_block():
-    a = utils.get_blocks(black_box(b''), 16)
-    b = utils.get_blocks(black_box(b'A'), 16)
-    for i in range(len(a)):
-        if a[i] != b[i]:
-            return i * 16
-    return -1
-
-#
-def prefix_tail_length(blocksize):
-    for i in range(blocksize):
-        pad = b'A' * (i + blocksize * 2)
-        blocks = utils.get_blocks(black_box(pad), 16)
-        for j in range(len(blocks) - 1):
-            if blocks[j] == blocks[j + 1]:
-                return blocksize - i
-    raise Exception("sorry pal")
-
-# prefix_edge = last_prefix_block()
-# ltp = length_to_pad(16)
-# print(ltp)
-# print(prefix_edge + ltp)
-
-# print( + l % 16)
-# ll = 16
-
-lpb = last_prefix_block()
-ptl = prefix_tail_length(16) % 16
-print("last_prefix_block {} prefix_tail_len {}".format(lpb, ptl))
-print(   utils.ecb_byte_aat(black_box, lpb, ptl)   )
+print(result)
 
 '''
 Byte-at-a-time ECB decryption (Harder)

@@ -122,52 +122,69 @@ def get_blocks(data, size):
 # SOLVERS
 #================
 
+#send in additional padding bytes until we cause the 
+#function (f) to kick us out another block, and then just
+#subtract the length of the initial empty result from the 
+#new length that we just got
+def get_block_size(f):
+    start = f(b'')
+    i = 1
+    while(True):
+        result = f(b'A' * i)
+        if len(result) != len(start):
+            return len(result) - len(start)
+        i += 1
+
 #ecb byte at a time 
 #f should be a function that takes a byte string  
 #and returns an ecb encrypted byte string
-#pl is prefix length
-def ecb_byte_aat(f, body_len=0, tail_len=0):
-    #get blocksize by shoving a bunch of identical
-    #bytes into the function and seeing if we can
-    #detect ECB, along with the blocksize used
-    blocksize = 0
-    for i in range(64):
-        pad = (b'A' * i) * 2
-        if detect_ecb(f(pad)):
-            blocksize = i
-            break
+def ecb_byte_aat(f):
+    #get blocksize first
+    blocksize = get_block_size(f)    
 
-    #make sure we actually determined a blocksize
-    if blocksize is 0: return None
-    
+    #solve the prefix (if any)
+    #we need overall length and the length of the tail
+    #prefix_len will be multiple of blocksize, tail_len
+    #will be the number of bytes needed to pad the prefix
+    #so that we can send in our input below cleanly at the
+    #start of a block
+    def solve_prefix():
+        for i in range(blocksize):
+            pad = b'A' * (i + blocksize * 2)
+            blocks = get_blocks(f(pad), 16)
+            for j in range(len(blocks) - 1):
+                if blocks[j] == blocks[j + 1]:
+                    return(j * blocksize, i)
+        raise Exception("sorry pal")
+
+    prefix_len, tail_len = solve_prefix()
+
     #we're gonna read the unknown portion by eating 
     #into it one byte at a time by sending in known
     #input plus sized padding such that we can  
     #randomize the very last byte of input 
-    print('tail length {}'.format(tail_len))
     solved = b''
+    pre = b'A' * tail_len #number of bytes to pad out the prefix block
     pad = b'A' * blocksize
     while True:
         #pad is the empty bytes at the front
         pad = b'A' * ((blocksize - 1 - (len(solved) % blocksize)))
-        print("len pad {} tail_len {}".format(len(pad) + len(solved), tail_len))
-        pad += b'A' * tail_len
-        #overall size (including the one extra byte that we'll be  
-        #randomizing) will be a multiple of blocksize) 
-        size = body_len + len(pad) + len(solved) + 1 
-        print("size", size)
+        #overall size, must be will be a multiple of blocksize
+        #includes the one byte that we're randomizing, as well
+        #as the total length of the prefix bytes 
+        size = prefix_len + len(pad) + len(solved) + 1 
         results = {}
-        #send (pad + solved + char) into the box, store 
+        #send (pre + pad + solved + char) into the box, store 
         #the first 'size' bytes in our results dict keyed
         #to the single byte that we used to get the result
         for j in range(0,255):
-            test = f(pad + solved + bytes([j])) 
+            test = f(pre + pad + solved + bytes([j])) 
             results[test[0:size]] = bytes([j])
         #send JUST the pad into the black box but test 
         #the same number of bytes off the front of the
         #result against the results table and see if 
         #we have the a matching result in our dict 
-        pad_only = f(pad)
+        pad_only = f(pre + pad)
         chunk = pad_only[0:size]
         if chunk in results:
             solved += results[chunk]
