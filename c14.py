@@ -28,7 +28,7 @@ import base64
 import random
 
 rand_key = Random.get_random_bytes(16)
-prefix = Random.get_random_bytes(random.randrange(24, 150))
+prefix = Random.get_random_bytes(16) #random.randrange(24, 150)
 unknown = b'this is the good stuff'
 
 def black_box(user_input):
@@ -47,6 +47,8 @@ def last_suffix_block():
     return -1
 
 suffix_edge = last_suffix_block()
+
+print( utils.ecb_byte_aat(black_box, 16) )
 
 '''
 Byte-at-a-time ECB decryption (Harder)
