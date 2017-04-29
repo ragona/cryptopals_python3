@@ -126,7 +126,7 @@ def get_blocks(data, size):
 #f should be a function that takes a byte string  
 #and returns an ecb encrypted byte string
 #pl is prefix length
-def ecb_byte_aat(f, pl=0):
+def ecb_byte_aat(f, body_len=0, tail_len=0):
     #get blocksize by shoving a bunch of identical
     #bytes into the function and seeing if we can
     #detect ECB, along with the blocksize used
@@ -144,14 +144,18 @@ def ecb_byte_aat(f, pl=0):
     #into it one byte at a time by sending in known
     #input plus sized padding such that we can  
     #randomize the very last byte of input 
+    print('tail length {}'.format(tail_len))
     solved = b''
     pad = b'A' * blocksize
     while True:
         #pad is the empty bytes at the front
-        pad = b'A' * (blocksize - 1 - (len(solved) % blocksize))
-        #overall size will be multiple of blocksize, including 
-        #the one extra byte that we'll be randomizing
-        size = pl + len(pad) + len(solved) + 1
+        pad = b'A' * ((blocksize - 1 - (len(solved) % blocksize)))
+        print("len pad {} tail_len {}".format(len(pad) + len(solved), tail_len))
+        pad += b'A' * tail_len
+        #overall size (including the one extra byte that we'll be  
+        #randomizing) will be a multiple of blocksize) 
+        size = body_len + len(pad) + len(solved) + 1 
+        print("size", size)
         results = {}
         #send (pad + solved + char) into the box, store 
         #the first 'size' bytes in our results dict keyed
