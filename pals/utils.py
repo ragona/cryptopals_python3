@@ -114,7 +114,15 @@ def pad(data, size):
     return data + bytes([pad_size]) * pad_size
 
 def unpad(data):
-    return data[:-data[-1]]
+    pad_size = data[-1]
+    validate_pad(data, pad_size)
+    return data[:-pad_size]
+
+def validate_pad(data, pad_size):
+    padding = data[-pad_size:]
+    for c in padding:
+        if c != pad_size:
+            raise Exception('invalid padding')
 
 def pad_string(s, size):
     return pad(bytes(s, 'ascii'), size).decode('ascii')
