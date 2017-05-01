@@ -26,7 +26,7 @@ def profile_for(email):
 #the way that the application treats the cookies it gets
 def parse_encrypted_profile(b):
     s = utils.aes_ecb_decrypt(b, random_key).decode('ascii')
-    return kv_parse(s.rstrip('\x04'))
+    return kv_parse(utils.unpad_string(s))
 
 #the cookie the attacker gets back (we'd b64 this)
 def black_box(user_input):
@@ -44,7 +44,7 @@ def black_box(user_input):
 
 #first we jam in a bunch of 16 byte blocks of 'admin'
 #plus padding to take us to the end of the block
-enc = black_box('A' * 10 + ('admin' + '\x04' * 11) * 10)
+enc = black_box('A' * 10 + (utils.pad_string('admin', 16)) * 10)
 dec = parse_encrypted_profile(enc)
 
 print('===== bad ======')

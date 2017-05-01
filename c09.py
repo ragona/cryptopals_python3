@@ -1,7 +1,5 @@
-def pad(block, size):
-    return bytes([block[i] if i < len(block) else 0x4 for i in range(size)])
-
-print(pad(b'YELLOW SUBMARINE', 20))
+from pals import utils
+print(utils.pad(b'YELLOW SUBMARINE', 20))
 '''
 Implement PKCS#7 padding
 A block cipher transforms a fixed-sized block (usually 8 or 16 bytes) of plaintext into ciphertext. 
