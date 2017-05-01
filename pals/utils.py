@@ -108,8 +108,21 @@ def detect_ecb(data, size=16):
 # PADDING
 #================
 
-def pad(block, size):
-    return bytes([block[i] if i < len(block) else 0x4 for i in range(size)])
+#pkcs7
+def pad(data, size):
+    pad_size = size - len(data) % size
+    return data + bytes([pad_size]) * pad_size
+
+def unpad(data):
+    return data[:-data[-1]]
+
+def pad_string(s, size):
+    pad_size = size - len(s) % size
+    return s + chr(pad_size) * pad_size
+
+def unpad_string(s):
+    pad_size = ord(s[-1])
+    return s[:-pad_size]
 
 #================
 # GET BLOCKS
