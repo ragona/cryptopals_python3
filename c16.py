@@ -26,7 +26,13 @@ def flip_bit(data, i, tgt):
         if test[i] is tgt[0]: #tgt[0] to get the int value of the single chr passed in
             return bytes(data)
 
+
 #dirty little hardcoded solution
+#I'm positive there's a cleaner way to predict
+#the xor result and just change to the RIGHT 
+#character, but instead I'm just brute forcing
+#it since I don't quite get the binary math :\
+
 #36, 42, 47 are the XXX characters
 cookie = black_box(b'foooXadminXtrueX')
 cookie = flip_bit(cookie, 36, b';')
