@@ -82,8 +82,9 @@ def aes_cbc_encrypt(data, key, iv):
     block_size = len(iv)
     results = bytes()
     ciphertext = iv
+    data = pad(data, 16)
     for i in range(0, len(data), block_size):
-        plaintext = pad(data[i : i + block_size], block_size)
+        plaintext = data[i : i + block_size]
         xord = bytes([plaintext[i] ^ ciphertext[i] for i in range(block_size)]) 
         ciphertext = cipher.encrypt(xord)
         results += ciphertext
