@@ -17,7 +17,7 @@ def parse(cookie):
 #rough solution, relies on being able to 
 #read the actual parsed result of the cookie
 #for example being able to see your user name
-#as it changes through the varios manipulations
+#as it changes through the various manipulations
 def flip_bit(data, i, tgt):
     data = bytearray(data)
     for c in range(255):
