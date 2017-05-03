@@ -1,7 +1,7 @@
 from pals import utils
 from Crypto import Random
 
-rand_key = b'3\x19t\x18\x0b\xe1\xb9FL\x02Q\xf5\xf7\xa5Z\xd7'# Random.get_random_bytes(16)
+rand_key = Random.get_random_bytes(16)
 prefix = b'comment1=cooking%20MCs;userdata='  
 suffix = b';comment2=%20like%20a%20pound%20of%20bacon'
 
