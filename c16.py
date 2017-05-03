@@ -32,9 +32,7 @@ def flip_bit(data, i, tgt):
 #the xor result and just change to the RIGHT 
 #character, but instead I'm just brute forcing
 #it since I don't quite get the binary math :\
-
-#36, 42, 47 are the XXX characters
-cookie = black_box(b'foooXadminXtrueX')
+cookie = black_box(b'foooXadminXtrueX') #36, 42, 47 are the XXX characters
 cookie = flip_bit(cookie, 36, b';')
 cookie = flip_bit(cookie, 42, b'=')
 cookie = flip_bit(cookie, 47, b';')
