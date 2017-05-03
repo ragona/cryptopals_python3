@@ -1,10 +1,11 @@
 from pals import utils
 from Crypto import Random
 
-rand_key = Random.get_random_bytes(16)
+rand_key = b'3\x19t\x18\x0b\xe1\xb9FL\x02Q\xf5\xf7\xa5Z\xd7'# Random.get_random_bytes(16)
 prefix = b'comment1=cooking%20MCs;userdata='  
 suffix = b';comment2=%20like%20a%20pound%20of%20bacon'
 
+#setup
 def black_box(user_input):
     user_input = user_input.replace(b'=', b'')
     user_input = user_input.replace(b';', b'')
@@ -13,12 +14,26 @@ def black_box(user_input):
 def parse(cookie):
     return utils.aes_cbc_decrypt(cookie, rand_key, b'0' * 16)
 
-a = black_box(b'foo;admin=true')
-b = parse(a)
+#rough solution, relies on being able to 
+#read the actual parsed result of the cookie
+#for example being able to see your user name
+#as it changes through the varios manipulations
+def flip_bit(data, i, tgt):
+    data = bytearray(data)
+    for c in range(255):
+        data[i - 16] = c #flip the bit one block back from our target
+        test = parse(bytes(data))
+        if test[i] is tgt[0]: #tgt[0] to get the int value of the single chr passed in
+            return bytes(data)
 
+#dirty little hardcoded solution
+#36, 42, 47 are the XXX characters
+cookie = black_box(b'foooXadminXtrueX')
+cookie = flip_bit(cookie, 36, b';')
+cookie = flip_bit(cookie, 42, b'=')
+cookie = flip_bit(cookie, 47, b';')
 
-[print(block) for block in utils.get_blocks(a, 16)]
-print(b)
+print(parse(cookie))
 
 '''
 CBC bitflipping attacks
