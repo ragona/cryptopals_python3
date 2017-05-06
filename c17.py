@@ -35,22 +35,9 @@ def is_padding_valid(ciphertext):
         return False
 
 def decrypt(ciphertext):
-    blocks = utils.get_blocks(ciphertext, 16)
-    for i in range(len(blocks) - 1, 0, -1):
-        print("block", i)
-        a = bytearray(16)
-        print(a)
-        for j in range(16, 0, -1):
-            print("character", j)
-            for k in range(256):
-                a[-(j - 1)] = k
-                print(base64.b64encode(a))
-                tampered_cookie = bytes(b''.join(blocks[:i]) + a + b''.join(blocks[i + 1:]))
-                if is_padding_valid(tampered_cookie):
-                    # print(k)
-                    continue
-        # block = blocks[len(blocks) - i + 1]
-    return 'foo'
+    for i in range(len(ciphertext) // 16):
+        print(i)
+    return 'done'
 
 print(
     decrypt(black_box())
