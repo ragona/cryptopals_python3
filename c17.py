@@ -1,5 +1,60 @@
-#
+from Crypto import Random
+from Crypto.Cipher import AES
+from pals import utils
+import random
+import base64
 
+random_key = 'YELLOW SUBMARINE'#Random.get_random_bytes(16)
+iv = b'0' * 16
+strs = [
+    b'MDAwMDAwTm93IHRoYXQgdGhlIHBhcnR5IGlzIGp1bXBpbmc=',
+    # b'MDAwMDAxV2l0aCB0aGUgYmFzcyBraWNrZWQgaW4gYW5kIHRoZSBWZWdhJ3MgYXJlIHB1bXBpbic=',
+    # b'MDAwMDAyUXVpY2sgdG8gdGhlIHBvaW50LCB0byB0aGUgcG9pbnQsIG5vIGZha2luZw==',
+    # b'MDAwMDAzQ29va2luZyBNQydzIGxpa2UgYSBwb3VuZCBvZiBiYWNvbg==',
+    # b'MDAwMDA0QnVybmluZyAnZW0sIGlmIHlvdSBhaW4ndCBxdWljayBhbmQgbmltYmxl',
+    # b'MDAwMDA1SSBnbyBjcmF6eSB3aGVuIEkgaGVhciBhIGN5bWJhbA==',
+    # b'MDAwMDA2QW5kIGEgaGlnaCBoYXQgd2l0aCBhIHNvdXBlZCB1cCB0ZW1wbw==',
+    # b'MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=',
+    # b'MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=',
+    # b'MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93',
+]
+
+
+def black_box():
+    s = utils.pad(strs[random.randrange(0, len(strs))], 16)
+    aes = AES.new(random_key, AES.MODE_CBC, iv)
+    return aes.encrypt(s)
+
+def is_padding_valid(ciphertext):
+    aes = AES.new(random_key, AES.MODE_CBC, iv)
+    s = aes.decrypt(ciphertext)
+    try:
+        utils.unpad(s)
+        return True
+    except:
+        return False
+
+def decrypt(ciphertext):
+    blocks = utils.get_blocks(ciphertext, 16)
+    for i in range(len(blocks) - 1, 0, -1):
+        print("block", i)
+        a = bytearray(16)
+        print(a)
+        for j in range(16, 0, -1):
+            print("character", j)
+            for k in range(256):
+                a[-(j - 1)] = k
+                print(base64.b64encode(a))
+                tampered_cookie = bytes(b''.join(blocks[:i]) + a + b''.join(blocks[i + 1:]))
+                if is_padding_valid(tampered_cookie):
+                    # print(k)
+                    continue
+        # block = blocks[len(blocks) - i + 1]
+    return 'foo'
+
+print(
+    decrypt(black_box())
+)
 '''
 The CBC padding oracle
 This is the best-known attack on modern block-cipher cryptography.
