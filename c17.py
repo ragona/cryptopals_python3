@@ -5,33 +5,33 @@ from pals import utils
 import random
 import base64
 
-##===serverside====
-random_key = Random.get_random_bytes(16)
-iv = Random.get_random_bytes(16)
-strs = [
-    b'YELLOW SUBMARINEYELLOW SUBMARIN'
-    # b'MDAwMDAwTm93IHRoYXQgdGhlIHBhcnR5IGlzIGp1bXBpbmc=',
-    # b'MDAwMDAxV2l0aCB0aGUgYmFzcyBraWNrZWQgaW4gYW5kIHRoZSBWZWdhJ3MgYXJlIHB1bXBpbic=',
-    # b'MDAwMDAyUXVpY2sgdG8gdGhlIHBvaW50LCB0byB0aGUgcG9pbnQsIG5vIGZha2luZw==',
-    # b'MDAwMDAzQ29va2luZyBNQydzIGxpa2UgYSBwb3VuZCBvZiBiYWNvbg==',
-    # b'MDAwMDA0QnVybmluZyAnZW0sIGlmIHlvdSBhaW4ndCBxdWljayBhbmQgbmltYmxl',
-    # b'MDAwMDA1SSBnbyBjcmF6eSB3aGVuIEkgaGVhciBhIGN5bWJhbA==',
-    # b'MDAwMDA2QW5kIGEgaGlnaCBoYXQgd2l0aCBhIHNvdXBlZCB1cCB0ZW1wbw==',
-    # b'MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=',
-    # b'MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=',
-    # b'MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93',
+#===serverside====
+algo = DES #using DES here because of the 8 byte pad in these strings
+random_key = Random.get_random_bytes(algo.block_size)
+iv = Random.get_random_bytes(algo.block_size)
+strs = [ 
+    b'MDAwMDAwTm93IHRoYXQgdGhlIHBhcnR5IGlzIGp1bXBpbmc=',
+    b'MDAwMDAxV2l0aCB0aGUgYmFzcyBraWNrZWQgaW4gYW5kIHRoZSBWZWdhJ3MgYXJlIHB1bXBpbic=',
+    b'MDAwMDAyUXVpY2sgdG8gdGhlIHBvaW50LCB0byB0aGUgcG9pbnQsIG5vIGZha2luZw==',
+    b'MDAwMDAzQ29va2luZyBNQydzIGxpa2UgYSBwb3VuZCBvZiBiYWNvbg==',
+    b'MDAwMDA0QnVybmluZyAnZW0sIGlmIHlvdSBhaW4ndCBxdWljayBhbmQgbmltYmxl',
+    b'MDAwMDA1SSBnbyBjcmF6eSB3aGVuIEkgaGVhciBhIGN5bWJhbA==',
+    b'MDAwMDA2QW5kIGEgaGlnaCBoYXQgd2l0aCBhIHNvdXBlZCB1cCB0ZW1wbw==',
+    b'MDAwMDA3SSdtIG9uIGEgcm9sbCwgaXQncyB0aW1lIHRvIGdvIHNvbG8=',
+    b'MDAwMDA4b2xsaW4nIGluIG15IGZpdmUgcG9pbnQgb2g=',
+    b'MDAwMDA5aXRoIG15IHJhZy10b3AgZG93biBzbyBteSBoYWlyIGNhbiBibG93',
 ]
 
 def black_box():
-    s = utils.pad(strs[random.randrange(0, len(strs))], 16)
-    aes = AES.new(random_key, AES.MODE_CBC, iv)
+    s = utils.pad(strs[random.randrange(0, len(strs))], algo.block_size)
+    aes = algo.new(random_key, algo.MODE_CBC, iv) 
     return aes.encrypt(s)
 
 def oracle(ciphertext):
     return is_padding_valid(decrypt(ciphertext))
 
 def decrypt(ciphertext):
-    return AES.new(random_key, AES.MODE_CBC, iv).decrypt(ciphertext)
+    return algo.new(random_key, algo.MODE_CBC, iv).decrypt(ciphertext)
     
 def is_padding_valid(plaintext):
     # print(plaintext)
@@ -55,8 +55,8 @@ def solve_block(block, block_size=16):
             test[byte_num] = i
             #send the test into the oracle
             if not oracle(bytes(test)):
-                continue #failure case
-            #success case
+                continue #invalid padding
+            #valid padding
             pad_size = block_size - byte_num
             intermediate[byte_num] = test[byte_num] ^ pad_size 
             for j in range(byte_num, block_size):
@@ -65,18 +65,21 @@ def solve_block(block, block_size=16):
             break
     return intermediate
 
-def solve(ciphertext):
-    #just solve the last block for now
-    b1 = ciphertext[-32:-16]
-    b2 = ciphertext[-16:]
-    a = solve_block(b2) 
-    print(xor(b1, a))
+#solves everything except the first block
+def solve(ciphertext, block_size=16):
+    solution = b''
+    for i in reversed(range(len(ciphertext) // block_size)):
+        a = ciphertext[i*block_size-block_size:i*block_size]
+        b = ciphertext[i*block_size:i*block_size+block_size]
+        c = solve_block(b, block_size)
+        solution = xor(a, c) + solution
+    return solution
 
 def xor(a, b):
     return b''.join([bytes([a[i] ^ b[i]]) for i in range(len(a))])
 
 print(
-    solve(black_box())
+    base64.b64decode(solve(black_box(), algo.block_size))
 )
 '''
 The CBC padding oracle
