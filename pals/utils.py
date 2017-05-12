@@ -30,6 +30,10 @@ def getMostEnglishDecryption(s):
             best = result
     return [bestScore, best]
 
+#xor two buffers, uses length of the first buffer
+def xor(a, b):
+    return b''.join([bytes([a[i] ^ b[i]]) for i in range(len(a))])
+
 #=====================
 # HAMMING DISTANCE 
 #=====================
@@ -92,6 +96,16 @@ def aes_cbc_encrypt(data, key, iv):
 
 def aes_cbc_decrypt(data, key, iv):
     return AES.new(key, AES.MODE_CBC, iv).decrypt(data)
+
+def ctr(data, key, nonce):
+    output = bytes()
+    for i in range(len(data) // 16 + 1):
+        counter = (i).to_bytes(8, byteorder='little')
+        keystream = AES.new(key, AES.MODE_ECB).encrypt(nonce + counter)
+        block = data[i * 16 : i * 16 + 16]
+        output += xor(block, keystream)
+    return output
+
 
 #================
 # DETECTION

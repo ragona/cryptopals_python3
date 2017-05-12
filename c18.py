@@ -1,32 +1,22 @@
 from Crypto.Cipher import AES
 from Crypto import Random
+from pals.utils import ctr
 import base64
 
 
 s = b'L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=='
 key = b'YELLOW SUBMARINE'
+nonce = bytes(8)
 
-def ctr(buffer):
-    output = bytes()
-    nonce = bytes(8)
-    for i in range(len(buffer) // 16 + 1):
-        counter = (i).to_bytes(8, byteorder='little')
-        keystream = AES.new(key, AES.MODE_ECB).encrypt(nonce + counter)
-        block = buffer[i * 16 : i * 16 + 16]
-        output += xor(block, keystream)
-    return output
-
-def xor(a, b):
-    return b''.join([bytes([a[i] ^ b[i]]) for i in range(len(a))])
 
 print(
-    ctr(base64.b64decode(s))
+    ctr(base64.b64decode(s), key, nonce)
 )
 
-a = ctr(b'foo')
-b = ctr(a)
-c = ctr(b)
-d = ctr(c)
+a = ctr(b'foo', key, nonce)
+b = ctr(a, key, nonce)
+c = ctr(b, key, nonce)
+d = ctr(c, key, nonce)
 
 print(a)
 print(b)
