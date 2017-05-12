@@ -58,11 +58,14 @@ def solve_block(block, block_size=16):
                 continue #invalid padding
             #valid padding
             pad_size = block_size - byte_num
+            #add byte xor'd with pad_size to return block
             intermediate[byte_num] = test[byte_num] ^ pad_size 
+            #prepare test block for next iteration
             for j in range(byte_num, block_size):
                 test[j] ^= pad_size
                 test[j] ^= pad_size + 1
             break
+    #send back the intermediate bytes to be xored with the previous block
     return intermediate
 
 #solves everything except the first block
