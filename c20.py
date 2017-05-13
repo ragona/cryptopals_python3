@@ -23,29 +23,21 @@ def decypher(d, ks):
     # rotating decode
     result = ["".join([chr(b ^ key[i % len(key)]) for i, b in enumerate(d)]), key]
 
-    #examine all results
-    bestResult = ""
-    bestScore = 0
-    print(len(results))
-    for result in results:
-        score = utils.scoreEnglishness(result[0])
-        if score > bestScore:
-            bestResult = result
-            bestScore = score
-
     #print the best result and its key
-    print("{}\n=====\nkey: '{}'".format(bestResult[0], "".join([chr(c) for c in bestResult[1]])))
+    print("{}\n=====\nkey: '{}'".format(result[0], "".join([chr(c) for c in result[1]])))
 
+#this works because each block is XORd against the same ciphertext, since the ciphertext
+#is a fixed nonce plus a consistent counter. It's basically a big long XOR key that gets 
+#repeated for each line. This allows you to concatenate the first N bytes of each cipher 
+#into one long block, and solve the whole thing as if it's a repeating key XOR. It does 
+#mean that you only get the first N bytes of the ciphertext though, where N is the length
+#of the shortest cipher. 
 with open('files/c20.txt', 'rb') as f:
     lines = f.readlines()
-    smallest = 9000
     concat = bytes()
     for line in lines:
         ciphertext = utils.ctr(bytes(b64decode(line)), b'YELLOW SUBMARINE', nonce)
         concat += ciphertext[:53]
-        # if len(ciphertext) < smallest:
-        #     smallest = len(ciphertext)
-
 
     decypher(concat, 53)
 
