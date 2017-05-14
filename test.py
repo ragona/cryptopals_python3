@@ -3,4 +3,6 @@
 #the reuslt, this file functions as a bootleg
 #series of unittests. used to make sure that 
 #changes in util didn't break stuff.
-import c01, c02, c03, c04, c05, c06, c07, c08, c09, c10, c11, c12, c13, c14, c15, c16
+import c01, c02, c03, c04, c05, c06, c07, c08, c09
+import c10, c11, c12, c13, c14, c15, c16
+import c17, c18, c19, c20, c21, c22
