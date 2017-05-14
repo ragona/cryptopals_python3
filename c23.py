@@ -1,3 +1,14 @@
+def untemper(y):
+    # Left shift by 18 bits
+    y = y ^ y << 18
+    # Shift y right by 15 and take the bitwise and of y and 4022730752
+    y = y ^ y >> 15 & 4022730752
+    # Shift y right by 7 and take the bitwise and of 2636928640
+    y = y ^ y >> 7 & 2636928640
+    # Left shift by 11 bits
+    y = y ^ y << 11
+    return y
+
 
 '''
 Clone an MT19937 RNG from its output
