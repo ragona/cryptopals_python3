@@ -277,3 +277,6 @@ class MT19937:
             if y % 2 != 0:
                 self.mt[i] = self.mt[i] ^ 0x9908b0df
         self.index = 0
+
+    def replace_state(self, state):
+        self.mt = state
