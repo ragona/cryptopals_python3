@@ -1,4 +1,8 @@
+from pals import utils 
+
 def untemper(y):
+    #oh this is not nearly sufficient. D: 
+    
     # Left shift by 18 bits
     y = y ^ y << 18
     # Shift y right by 15 and take the bitwise and of y and 4022730752
@@ -9,6 +13,28 @@ def untemper(y):
     y = y ^ y << 11
     return y
 
+def _int32(x):
+    # Get the 32 least significant bits.
+    return int(0xFFFFFFFF & x)
+
+mt = utils.MT19937(0) 
+a = mt.extract_number()
+b = untemper(a)
+print('y', _int32(b))
+exit(0)
+print('one')
+a = [mt.extract_number() for i in range(624)]
+b = [untemper(y) for y in a]
+
+print('two')
+mt2 = utils.MT19937(0)
+mt2.replace_state(b)
+
+print('three')
+c = [mt2.extract_number() for i in range(5)]
+
+print(a[:5])
+print(c)
 
 '''
 Clone an MT19937 RNG from its output
