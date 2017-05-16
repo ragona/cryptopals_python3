@@ -1,17 +1,29 @@
 from pals import utils 
 
+def get_bit(number, i):
+    if i < 0 or i > 31:
+        return 0
+    return (number >> (31 - i)) & 1
+
+def undo_right_xor(number, shift_dist):
+    #
+
+def undo_left_xor_and(number, shift_dist, andN):
+    #
+
+"""
+# Right shift by 11 bits
+y = y ^ y >> 11
+# Shift y left by 7 and take the bitwise and of 2636928640
+y = y ^ y << 7 & 2636928640
+# Shift y left by 15 and take the bitwise and of y and 4022730752
+y = y ^ y << 15 & 4022730752
+# Right shift by 18 bits
+y = y ^ y >> 18
+"""
 def untemper(y):
     #oh this is not nearly sufficient. D: 
     
-    # Left shift by 18 bits
-    y = y ^ y << 18
-    # Shift y right by 15 and take the bitwise and of y and 4022730752
-    y = y ^ y >> 15 & 4022730752
-    # Shift y right by 7 and take the bitwise and of 2636928640
-    y = y ^ y >> 7 & 2636928640
-    # Left shift by 11 bits
-    y = y ^ y << 11
-    return y
 
 def _int32(x):
     # Get the 32 least significant bits.
