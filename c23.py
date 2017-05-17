@@ -5,11 +5,7 @@ def get_bit(number, i):
         return 0
     return (number >> (31 - i)) & 1
 
-def undo_right_xor(number, shift_dist):
-    #
 
-def undo_left_xor_and(number, shift_dist, andN):
-    #
 
 """
 # Right shift by 11 bits
@@ -22,8 +18,9 @@ y = y ^ y << 15 & 4022730752
 y = y ^ y >> 18
 """
 def untemper(y):
-    #oh this is not nearly sufficient. D: 
-    
+        #I am learning a lot about bit shifting 
+        #and not writing a lot of solutions
+        #gonna call that a win anyway
 
 def _int32(x):
     # Get the 32 least significant bits.
