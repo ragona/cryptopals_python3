@@ -1,12 +1,23 @@
 from pals import utils 
 
-def get_bit(number, i):
-    if i < 0 or i > 31:
-        return 0
-    return (number >> (31 - i)) & 1
+def get_bit_from_left(n, i):
+    if i < 0: return 0
+    return (n >> (31 - i)) & 1
 
+def set_bit_in_number(n, i, bit):
+    return n | (bit << (31 - i))
 
+def undo_right_shift_xor(y, shift_len):
+    z = 0
+    for i in range(32):
+        bit = get_bit_from_left(y, i) ^ get_bit_from_left(z, i - shift_len)
+        z = set_bit_in_number(z, i, bit)
+    return z
 
+a = 240
+b = a ^ a >> 4
+c = undo_right_shift_xor(b, 4)
+print(a, b, c)
 """
 # Right shift by 11 bits
 y = y ^ y >> 11
@@ -18,33 +29,7 @@ y = y ^ y << 15 & 4022730752
 y = y ^ y >> 18
 """
 def untemper(y):
-        #I am learning a lot about bit shifting 
-        #and not writing a lot of solutions
-        #gonna call that a win anyway
-
-def _int32(x):
-    # Get the 32 least significant bits.
-    return int(0xFFFFFFFF & x)
-
-mt = utils.MT19937(0) 
-a = mt.extract_number()
-b = untemper(a)
-print('y', _int32(b))
-exit(0)
-print('one')
-a = [mt.extract_number() for i in range(624)]
-b = [untemper(y) for y in a]
-
-print('two')
-mt2 = utils.MT19937(0)
-mt2.replace_state(b)
-
-print('three')
-c = [mt2.extract_number() for i in range(5)]
-
-print(a[:5])
-print(c)
-
+    return y
 '''
 Clone an MT19937 RNG from its output
 The internal state of MT19937 consists of 624 32 bit integers.
