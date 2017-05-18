@@ -14,6 +14,9 @@ def undo_right_shift_xor(y, shift_len):
         z = set_bit_in_number(z, i, bit)
     return z
 
+def undo_left_shift_xor_and(y, shift_len, and_value):
+    return 0
+
 a = 240
 b = a ^ a >> 4
 c = undo_right_shift_xor(b, 4)
