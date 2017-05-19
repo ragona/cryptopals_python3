@@ -1,5 +1,14 @@
 from pals import utils 
 
+'''
+I've really struggled with this one. Bitwise operations
+are not something I've spent much time with, and this 
+has been a super valuable learning experience. But also
+damn, it's really taken some time for me to bang my head
+through these problems. 
+'''
+
+
 def get_bit_from_left(n, i):
     if i < 0: return 0
     return (n >> (31 - i)) & 1
@@ -27,16 +36,6 @@ def undo_left_shift_xor_and(y, shift_len, constant):
         x = set_bit(x, i, ybit ^ (xbit & cbit))
     return x
 
-
-a = 240
-b = a ^ a >> 4
-c = undo_right_shift_xor(b, 4)
-print(a, b, c)
-
-a = 240
-b = a ^ a << 15 & 12355123
-c = undo_left_shift_xor_and(b, 15, 12355123)
-print(a, b, c)
 """
 # Right shift by 11 bits
 y = y ^ y >> 11
@@ -48,6 +47,10 @@ y = y ^ y << 15 & 4022730752
 y = y ^ y >> 18
 """
 def untemper(y):
+    y = undo_right_shift_xor(y, 18)
+    y = undo_left_shift_xor_and(y, 15, 4022730752)
+    y = undo_left_shift_xor_and(y, 7, 2636928640)
+    y = undo_right_shift_xor(y, 11)
     return y
 '''
 Clone an MT19937 RNG from its output
