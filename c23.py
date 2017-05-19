@@ -4,22 +4,38 @@ def get_bit_from_left(n, i):
     if i < 0: return 0
     return (n >> (31 - i)) & 1
 
-def set_bit_in_number(n, i, bit):
-    return n | (bit << (31 - i))
+def get_bit_from_right(n, i):
+    if i < 0: return 0
+    return n >> i & 1
+
+def set_bit(n, i, bit):
+    return n | (bit << i)
 
 def undo_right_shift_xor(y, shift_len):
-    z = 0
+    x = 0
     for i in range(32):
-        bit = get_bit_from_left(y, i) ^ get_bit_from_left(z, i - shift_len)
-        z = set_bit_in_number(z, i, bit)
-    return z
+        bit = get_bit_from_left(y, i) ^ get_bit_from_left(x, i - shift_len)
+        x = set_bit(x, 31 - i, bit)
+    return x
 
-def undo_left_shift_xor_and(y, shift_len, and_value):
-    return 0
+def undo_left_shift_xor_and(y, shift_len, constant):
+    x = 0
+    for i in range(32):
+        ybit = get_bit_from_right(y, i)
+        xbit = get_bit_from_right(x, i - shift_len)
+        cbit = get_bit_from_right(constant, i)
+        x = set_bit(x, i, ybit ^ (xbit & cbit))
+    return x
+
 
 a = 240
 b = a ^ a >> 4
 c = undo_right_shift_xor(b, 4)
+print(a, b, c)
+
+a = 240
+b = a ^ a << 15 & 12355123
+c = undo_left_shift_xor_and(b, 15, 12355123)
 print(a, b, c)
 """
 # Right shift by 11 bits
