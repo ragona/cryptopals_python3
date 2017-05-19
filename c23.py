@@ -1,4 +1,5 @@
 from pals import utils 
+import random
 
 '''
 I've really struggled with this one. Bitwise operations
@@ -8,15 +9,17 @@ damn, it's really taken some time for me to bang my head
 through these problems. 
 '''
 
-
+#get least significant bit  
 def get_bit_from_left(n, i):
     if i < 0: return 0
     return (n >> (31 - i)) & 1
 
+#get most significant bit
 def get_bit_from_right(n, i):
     if i < 0: return 0
     return n >> i & 1
 
+#set a bit within a number (n)
 def set_bit(n, i, bit):
     return n | (bit << i)
 
@@ -37,6 +40,7 @@ def undo_left_shift_xor_and(y, shift_len, constant):
     return x
 
 """
+Operation to undo:
 # Right shift by 11 bits
 y = y ^ y >> 11
 # Shift y left by 7 and take the bitwise and of 2636928640
@@ -52,6 +56,21 @@ def untemper(y):
     y = undo_left_shift_xor_and(y, 7, 2636928640)
     y = undo_right_shift_xor(y, 11)
     return y
+
+#new generator
+mt = utils.MT19937(random.randrange(0, 2 << 32))
+
+#clone state
+cloned_state = [untemper(mt.extract_number()) for i in range(624)]
+
+#make sure state does equal cloned state
+print(mt.mt == cloned_state)
+
+#make sure output is identical
+cloned_mt = utils.MT19937(0)
+cloned_mt.replace_state(cloned_state)
+print(mt.extract_number() == cloned_mt.extract_number())
+
 '''
 Clone an MT19937 RNG from its output
 The internal state of MT19937 consists of 624 32 bit integers.
