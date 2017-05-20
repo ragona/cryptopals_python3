@@ -1,3 +1,24 @@
+from Crypto import Random
+from pals import utils
+import random
+
+def mt_stream_cipher(plaintext, seed):
+    mt = utils.MT19937(seed)
+    ciphertext = b''
+    for b in plaintext:
+        ciphertext += bytes([mt.extract_number() >> 24 ^ b])
+    return ciphertext
+
+seed = random.randint(0, 2 << 16)
+plaintext = Random.get_random_bytes(random.randint(2, 6)) + (b'A' * 14)
+
+#encrypt
+ciphertext = mt_stream_cipher(plaintext, seed)
+#decrypt
+plaintext = mt_stream_cipher(ciphertext, seed)
+
+print(ciphertext, plaintext)
+
 '''
 Create the MT19937 stream cipher and break it
 You can create a trivial stream cipher out of any PRNG; use it to 
