@@ -9,6 +9,7 @@ def mt_stream_cipher(plaintext, seed):
         ciphertext += bytes([mt.extract_number() >> 24 ^ b])
     return ciphertext
 
+#brute force recover seed within 16 bit number
 def get_seed(ciphertext, known_plaintext):
     for i in range(2 << 16):
         print('seed {}'.format(i), end='\r')
@@ -16,6 +17,7 @@ def get_seed(ciphertext, known_plaintext):
         if known_plaintext in plaintext:
             print()
             return i
+    raise Exception("couldn't find seed in 2 << 16")
 
 seed = random.randint(0, 2 << 16)
 rand_plaintext = Random.get_random_bytes(random.randint(2, 6)) 
@@ -28,7 +30,6 @@ plaintext = mt_stream_cipher(ciphertext, seed)
 
 #crack seed 
 cracked_seed = get_seed(ciphertext, known_plaintext)
-
 print('original: {}, cracked: {}'.format(seed, cracked_seed))
 
 '''
