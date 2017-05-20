@@ -9,15 +9,27 @@ def mt_stream_cipher(plaintext, seed):
         ciphertext += bytes([mt.extract_number() >> 24 ^ b])
     return ciphertext
 
+def get_seed(ciphertext, known_plaintext):
+    for i in range(2 << 16):
+        print('seed {}'.format(i), end='\r')
+        plaintext = mt_stream_cipher(ciphertext, i)
+        if known_plaintext in plaintext:
+            print()
+            return i
+
 seed = random.randint(0, 2 << 16)
-plaintext = Random.get_random_bytes(random.randint(2, 6)) + (b'A' * 14)
+rand_plaintext = Random.get_random_bytes(random.randint(2, 6)) 
+known_plaintext = b'A' * 14
 
 #encrypt
-ciphertext = mt_stream_cipher(plaintext, seed)
+ciphertext = mt_stream_cipher(rand_plaintext + known_plaintext, seed)
 #decrypt
 plaintext = mt_stream_cipher(ciphertext, seed)
 
-print(ciphertext, plaintext)
+#crack seed 
+cracked_seed = get_seed(ciphertext, known_plaintext)
+
+print('original: {}, cracked: {}'.format(seed, cracked_seed))
 
 '''
 Create the MT19937 stream cipher and break it
