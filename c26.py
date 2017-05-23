@@ -10,18 +10,21 @@ suffix = b';comment2=%20like%20a%20pound%20of%20bacon'
 def black_box(user_input):
     user_input = user_input.replace(b'=', b'')
     user_input = user_input.replace(b';', b'')
-    return utils.ctr(prefix+user_input+suffix, rand_key, nonce)
+    return parse(prefix+user_input+suffix)
 
 def parse(cookie):
     return utils.ctr(cookie, rand_key, nonce)
 
-cookie = black_box(b'foooXadminXtrueX') #36, 42, 47 are the XXX characters
-# cookie = flip_bit(cookie, 36, b';')
-# cookie = flip_bit(cookie, 42, b'=')
-# cookie = flip_bit(cookie, 47, b';')
-print(cookie)
-print(parse(cookie))
-
+#1 pass in zero bytes so we just get the 'key' (encrypted nonce+ctr) back
+cookie = bytearray(black_box(b'fooba\x00admin\x00true')) #37, #43 are the XXX characters
+#2 swap out the special bytes with what will xor to our target bytes
+cookie[37] ^= ord(';')
+cookie[43] ^= ord('=')
+#3 send it back in to be turned into plaintext
+cookie = parse(cookie)
+#4 check admin token
+print("admin:", b"admin=true" in cookie)
+print("cookie:", cookie)
 
 '''
 CTR bitflipping
