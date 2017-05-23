@@ -18,7 +18,7 @@ modified = message[:16] + bytes(16) + message[:16]
 #the 'error return' text that would be returned in a debug message on parsing non-ascii chars
 parsed = parse(modified) 
 #the extracted key (block 1 ^ block 3)
-key = b''.join([bytes([i[0] ^ i[1]]) for i in zip(parsed[:16], parsed[-16:])])
+key = bytes([i[0] ^ i[1] for i in zip(parsed[:16], parsed[-16:])])
 #test
 print('key matches:', key == rand_key)
 print('extracted key:', key)
