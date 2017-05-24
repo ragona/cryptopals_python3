@@ -76,6 +76,9 @@ class Sha1Hash(object):
         # Length in bytes of all data that has been processed so far
         self._message_byte_length = 0
 
+    def replace_state(self, state):
+        self._h = state
+
     def update(self, arg):
         """Update the current digest.
         This may be called repeatedly, even after calling digest or hexdigest.
