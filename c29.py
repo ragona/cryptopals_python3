@@ -29,11 +29,10 @@ inject = b';admin=true'
 forged = pad_message(b'AAA' + s)[3:] + inject
 #make new mac
 bad_mac = cloned_sha1.update(forged).hexdigest()
+pad_forge = pad_message(s)
 
-
-print(good_mac)
 print(bad_mac)
-print(mac(s + inject))
+print(mac(pad_forge + inject))
 
 '''
 Break a SHA-1 keyed MAC using length extension
