@@ -1,3 +1,39 @@
+from pals.sha1 import Sha1Hash
+from binascii import unhexlify 
+import struct
+
+#taken from _produce_digest() method in sha1
+#see https://en.wikipedia.org/wiki/Merkle%E2%80%93Damg%C3%A5rd_construction#MD-compliant_padding
+def pad_message(message):
+    message_byte_length = len(message)
+    message += b'\x80'
+    message += b'\x00' * ((56 - (message_byte_length + 1) % 64) % 64)
+    message_bit_length = message_byte_length * 8
+    message += struct.pack(b'>Q', message_bit_length)
+    return message
+
+def mac(data):
+    return Sha1Hash().update(b'foo' + data).hexdigest()
+
+
+s = b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon'
+#original hash
+good_mac = mac(s)
+#reversed state of five 32 bit ints 
+state = struct.unpack('>5I', unhexlify(good_mac))
+#reset the state of the hash
+cloned_sha1 = Sha1Hash()
+cloned_sha1.replace_state(state)
+#pad with the length of the key (will need to automate) 
+inject = b';admin=true'
+forged = pad_message(b'AAA' + s)[3:] + inject
+#make new mac
+bad_mac = cloned_sha1.update(forged).hexdigest()
+
+
+print(good_mac)
+print(bad_mac)
+print(mac(s + inject))
 
 '''
 Break a SHA-1 keyed MAC using length extension
