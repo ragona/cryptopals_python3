@@ -1,3 +1,16 @@
+from pals.sha1 import sha1
+
+prefix = b'foo'
+
+def mac(data):
+    return sha1(prefix + data)
+
+def validate(hash, data):
+    return hash == mac(data)
+
+a = mac(b'bar')
+
+print(validate(a, b'bar'))
 
 '''
 Implement a SHA-1 keyed MAC
