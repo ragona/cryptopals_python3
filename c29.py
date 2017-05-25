@@ -39,21 +39,23 @@ def pad_msg(msg):
     #add length of message at the end in the last block 
     return msg + struct.pack(b'>Q', msg_len * 8)
 
-def sha1_ext_attack(msg, good_mac, inject):
+def sha1_ext_attack(msg, good_mac, inject, key_len):
     #the 'unwound' state of the sha1 algorithm
     state = struct.unpack('>5I', unhexlify(good_mac))
+    for i in range(100):
     #pad with the length of the key (will need to automate) 
-    forged_message = pad_msg(b'AAA' + msg)[3:] + inject
+    forged_message = pad_msg((b'A' * key_len) + msg)[key_len:] + inject
     #make new mac
-    forged_mac = sha1(inject, (3 + len(forged_message)) * 8, state[0], state[1], state[2], state[3], state[4])
+    forged_mac = sha1(inject, (key_len + len(forged_message)) * 8, state[0], state[1], state[2], state[3], state[4])
     return forged_message, forged_mac
     
 #our setup 
 msg = b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon'
 inject = b';admin=true'
 good_mac = mac(msg)
+
 #our attack
-bad_msg, bad_mac = sha1_ext_attack(msg, good_mac, inject)
+bad_msg, bad_mac = sha1_ext_attack(msg, good_mac, inject, 3)
 
 #the server's mac of our bad msg should match our generated hash 
 print(bad_mac)
