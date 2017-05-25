@@ -1,38 +1,32 @@
-from pals.sha1 import Sha1Hash
+from pals.sha1 import sha1
 from binascii import unhexlify 
 import struct
 
 #taken from _produce_digest() method in sha1
 #see https://en.wikipedia.org/wiki/Merkle%E2%80%93Damg%C3%A5rd_construction#MD-compliant_padding
-def pad_message(message):
-    message_byte_length = len(message)
-    message += b'\x80'
-    message += b'\x00' * ((56 - (message_byte_length + 1) % 64) % 64)
-    message_bit_length = message_byte_length * 8
-    message += struct.pack(b'>Q', message_bit_length)
-    return message
+def pad_message(msg):
+    msg_len = len(msg)
+    msg += b'\x80'
+    msg += b'\x00' * ((56 - (msg_len + 1) % 64) % 64)
+    bit_len = msg_len * 8
+    msg += struct.pack(b'>Q', bit_len)
+    return msg
 
 def mac(data):
-    return Sha1Hash().update(b'foo' + data).hexdigest()
-
+    return sha1(b'foo' + data)
 
 s = b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon'
-#original hash
-good_mac = mac(s)
 #reversed state of five 32 bit ints 
-state = struct.unpack('>5I', unhexlify(good_mac))
-#reset the state of the hash
-cloned_sha1 = Sha1Hash()
-cloned_sha1.replace_state(state)
+original = mac(s)
+state = struct.unpack('>5I', unhexlify(original))
 #pad with the length of the key (will need to automate) 
 inject = b';admin=true'
-forged = pad_message(b'AAA' + s)[3:] + inject
+forged_message = pad_message(b'AAA' + s)[3:] + inject
 #make new mac
-bad_mac = cloned_sha1.update(forged).hexdigest()
-pad_forge = pad_message(s)
+forged_mac = sha1(inject, (3 + len(forged_message)) * 8, state[0], state[1], state[2], state[3], state[4])
 
-print(bad_mac)
-print(mac(pad_forge + inject))
+print(forged_mac)
+print(mac(forged_message))
 
 '''
 Break a SHA-1 keyed MAC using length extension
