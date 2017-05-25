@@ -1,32 +1,63 @@
+'''
+Alright, here is my understanding of what is going on here. 
+SHA-1 state can be reversed, which allows you to pick back up
+hashing content where the algorithm left off. If the MAC is 
+constructed by just concatenating SECRET + DATA then an 
+attacker can create two things; a message with 1) padding out
+to the end of the block and 2) bad data appended to the end
+of the message. Second, the attacker will submit a MAC that 
+will match the MAC produced by the SECRET + DATA on the server
+side, so the message will appear to be valid. This is all 
+solved by using a hashed MAC (HMAC). 
+'''
+
 from pals.sha1 import sha1
 from binascii import unhexlify 
 import struct
 
-#taken from _produce_digest() method in sha1
-#see https://en.wikipedia.org/wiki/Merkle%E2%80%93Damg%C3%A5rd_construction#MD-compliant_padding
-def pad_message(msg):
-    msg_len = len(msg)
-    msg += b'\x80'
-    msg += b'\x00' * ((56 - (msg_len + 1) % 64) % 64)
-    bit_len = msg_len * 8
-    msg += struct.pack(b'>Q', bit_len)
-    return msg
+#============
+# server 
+#============
 
 def mac(data):
     return sha1(b'foo' + data)
 
-s = b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon'
-#reversed state of five 32 bit ints 
-original = mac(s)
-state = struct.unpack('>5I', unhexlify(original))
-#pad with the length of the key (will need to automate) 
-inject = b';admin=true'
-forged_message = pad_message(b'AAA' + s)[3:] + inject
-#make new mac
-forged_mac = sha1(inject, (3 + len(forged_message)) * 8, state[0], state[1], state[2], state[3], state[4])
+#============
+# attacker 
+#============
 
-print(forged_mac)
-print(mac(forged_message))
+#Merkle Damgard compliant padding
+#duplicates the way that sha1 does the initial message padding
+#this kicks the 'bad' message out to the edge of a block so that 
+#we can cleanly inject a suffix to it 
+def pad_msg(msg):
+    msg_len = len(msg)
+    #add the 1 bit (0b10000000)
+    msg += b'\x80'
+    #pad out with zeros except for one block at the end 
+    msg += b'\x00' * ((56 - (msg_len + 1) % 64) % 64)
+    #add length of message at the end in the last block 
+    return msg + struct.pack(b'>Q', msg_len * 8)
+
+def sha1_ext_attack(msg, good_mac, inject):
+    #the 'unwound' state of the sha1 algorithm
+    state = struct.unpack('>5I', unhexlify(good_mac))
+    #pad with the length of the key (will need to automate) 
+    forged_message = pad_msg(b'AAA' + msg)[3:] + inject
+    #make new mac
+    forged_mac = sha1(inject, (3 + len(forged_message)) * 8, state[0], state[1], state[2], state[3], state[4])
+    return forged_message, forged_mac
+    
+#our setup 
+msg = b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon'
+inject = b';admin=true'
+good_mac = mac(msg)
+#our attack
+bad_msg, bad_mac = sha1_ext_attack(msg, good_mac, inject)
+
+#the server's mac of our bad msg should match our generated hash 
+print(bad_mac)
+print(mac(bad_msg))
 
 '''
 Break a SHA-1 keyed MAC using length extension
