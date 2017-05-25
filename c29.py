@@ -31,8 +31,8 @@ def validate(msg, foo):
 
 #Merkle Damgard compliant padding
 #duplicates the way that sha1 does the initial message padding
-#this kicks the 'bad' message out to the edge of a block so that 
-#we can cleanly inject a suffix to it 
+#in the forged message this kicks the real message out to the edge  
+#of a block so that we can cleanly inject a suffix to it 
 def pad_msg(msg):
     msg_len = len(msg)
     #add the 1 bit (0b10000000)
