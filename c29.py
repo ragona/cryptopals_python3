@@ -20,7 +20,10 @@ import struct
 #============
 
 def mac(data):
-    return sha1(b'foo' + data)
+    return sha1(b'banana' + data)
+
+def validate(msg, foo):
+    return mac(msg) == foo
 
 #============
 # attacker 
@@ -37,12 +40,12 @@ def pad_msg(msg):
     #pad out with zeros except for one block at the end 
     msg += b'\x00' * ((56 - (msg_len + 1) % 64) % 64)
     #add length of message at the end in the last block 
-    return msg + struct.pack(b'>Q', msg_len * 8)
+    msg += struct.pack(b'>Q', msg_len * 8)
+    return msg 
 
-def sha1_ext_attack(msg, good_mac, inject, key_len):
+def sha1_ext(msg, good_mac, inject, key_len):
     #the 'unwound' state of the sha1 algorithm
     state = struct.unpack('>5I', unhexlify(good_mac))
-    for i in range(100):
     #pad with the length of the key (will need to automate) 
     forged_message = pad_msg((b'A' * key_len) + msg)[key_len:] + inject
     #make new mac
@@ -54,12 +57,13 @@ msg = b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20
 inject = b';admin=true'
 good_mac = mac(msg)
 
-#our attack
-bad_msg, bad_mac = sha1_ext_attack(msg, good_mac, inject, 3)
-
-#the server's mac of our bad msg should match our generated hash 
-print(bad_mac)
-print(mac(bad_msg))
+#our attack; guess at initial key prefix sizes
+for i in range(100):
+    #generate forged mac + msg
+    bad_msg, bad_mac = sha1_ext(msg, good_mac, inject, i)
+    #submit to server, see if it accepts it 
+    if validate(bad_msg, bad_mac):
+        print('forged message, key len is', i)
 
 '''
 Break a SHA-1 keyed MAC using length extension
