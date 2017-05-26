@@ -12,6 +12,7 @@ solved by using a hashed MAC (HMAC).
 '''
 
 from pals.sha1 import sha1
+from pals import utils
 from binascii import unhexlify 
 import struct
 
@@ -29,25 +30,11 @@ def validate(msg, foo):
 # attacker 
 #============
 
-#Merkle Damgard compliant padding
-#duplicates the way that sha1 does the initial message padding
-#this kicks the 'bad' message out to the edge of a block so that 
-#we can cleanly inject a suffix to it 
-def pad_msg(msg):
-    msg_len = len(msg)
-    #add the 1 bit (0b10000000)
-    msg += b'\x80'
-    #pad out with zeros except for one block at the end 
-    msg += b'\x00' * ((56 - (msg_len + 1) % 64) % 64)
-    #add length of message at the end in the last block 
-    msg += struct.pack(b'>Q', msg_len * 8)
-    return msg 
-
 def sha1_ext(msg, good_mac, inject, key_len):
     #the 'unwound' state of the sha1 algorithm
     state = struct.unpack('>5I', unhexlify(good_mac))
     #pad with the length of the key (will need to automate) 
-    forged_message = pad_msg((b'A' * key_len) + msg)[key_len:] + inject
+    forged_message = utils.md_pad((b'A' * key_len) + msg)[key_len:] + inject
     #make new mac
     forged_mac = sha1(inject, (key_len + len(forged_message)) * 8, state[0], state[1], state[2], state[3], state[4])
     return forged_message, forged_mac
