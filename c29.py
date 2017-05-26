@@ -34,7 +34,7 @@ def sha1_ext(msg, good_mac, inject, key_len):
     #the 'unwound' state of the sha1 algorithm
     state = struct.unpack('>5I', unhexlify(good_mac))
     #pad with the length of the key (will need to automate) 
-    forged_message = utils.md_pad((b'A' * key_len) + msg)[key_len:] + inject
+    forged_message = utils.sha1_pad((b'A' * key_len) + msg)[key_len:] + inject
     #make new mac
     forged_mac = sha1(inject, (key_len + len(forged_message)) * 8, state[0], state[1], state[2], state[3], state[4])
     return forged_message, forged_mac
@@ -51,6 +51,7 @@ for i in range(100):
     #submit to server, see if it accepts it 
     if validate(bad_msg, bad_mac):
         print('forged message, key len is', i)
+        break
 
 '''
 Break a SHA-1 keyed MAC using length extension
