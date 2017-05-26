@@ -19,9 +19,9 @@ def validate(msg, foo):
 
 def md4_ext(msg, good_mac, inject, key_len):
     #the 'unwound' state of the md4 algorithm
-    state = struct.unpack('>4I', unhexlify(good_mac))
+    state = struct.unpack('<4I', unhexlify(good_mac))
     # print('state')
-    print(state[0], state[1], state[2], state[3])
+    print("UW STATE", state[0], state[1], state[2], state[3])
     #pad with the length of the key (will need to automate) 
     forged_message = utils.md_pad((b'A' * key_len) + msg)[key_len:] + inject
     #make new mac
@@ -37,12 +37,13 @@ bad_msg, bad_mac = md4_ext(msg, good_mac, inject, 6)
 
 # print(good_mac)
 # our attack; guess at initial key prefix sizes
-# for i in range(5, 6):
+# for i in range(100):
 #     #generate forged mac + msg
 #     bad_msg, bad_mac = md4_ext(msg, good_mac, inject, i)
 #     #submit to server, see if it accepts it 
 #     if validate(bad_msg, bad_mac):
 #         print('forged message, key len is', i)
+#         break
 
 
 '''

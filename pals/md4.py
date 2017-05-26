@@ -37,6 +37,7 @@ class MD4():
     def __init__(self, message, msg_len=None, A=0x67452301, B=0xefcdab89, C=0x98badcfe, D=0x10325476):
         #allow user to replace state 
         self.A, self.B, self.C, self.D = A, B, C, D
+        print("SS STATE", self.A, self.B, self.C, self.D)
         #allow user to replace length
         msg_len = len(message) if msg_len is None else msg_len
         length = struct.pack('<Q', msg_len * 8)
@@ -98,6 +99,6 @@ class MD4():
         return struct.pack('<IIII', self.A, self.B, self.C, self.D)
 
     def hexdigest(self):
-        print(self.A, self.B, self.C, self.D)
+        print("EE STATE", self.A, self.B, self.C, self.D)
         return binascii.hexlify(self.digest()).decode()
 
