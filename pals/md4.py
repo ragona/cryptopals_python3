@@ -28,15 +28,19 @@ lrot = lambda x, n: (x << n) | (x >> (32 - n))
 
 class MD4():
 
-    A, B, C, D = (0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476)
     buf = [0x00] * 64
 
     _F = lambda self, x, y, z: ((x & y) | (~x & z))
     _G = lambda self, x, y, z: ((x & y) | (x & z) | (y & z))
     _H = lambda self, x, y, z: (x ^ y ^ z)
 
-    def __init__(self, message):
-        length = struct.pack('<Q', len(message) * 8)
+    def __init__(self, message, msg_len=None, A=0x67452301, B=0xefcdab89, C=0x98badcfe, D=0x10325476):
+        #allow user to replace state 
+        self.A, self.B, self.C, self.D = A, B, C, D
+        #allow user to replace length
+        msg_len = len(message) if msg_len is None else msg_len
+        length = struct.pack('<Q', msg_len * 8)
+
         while len(message) > 64:
             self._handle(message[:64])
             message = message[64:]
@@ -94,4 +98,6 @@ class MD4():
         return struct.pack('<IIII', self.A, self.B, self.C, self.D)
 
     def hexdigest(self):
+        print(self.A, self.B, self.C, self.D)
         return binascii.hexlify(self.digest()).decode()
+
