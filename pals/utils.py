@@ -147,18 +147,25 @@ def unpad_string(s):
     return unpad(bytes(s, 'ascii')).decode('ascii')
 
 #Merkle Damgard compliant padding
-#duplicates the way that sha1 does the initial message padding
-#this kicks the 'bad' message out to the edge of a block so that 
-#we can cleanly inject a suffix to it 
-def md_pad(msg):
+#used to duplicate the way that sha1/md4 do the initial message 
+#padding this kicks the 'bad' message out to the edge of a block  
+#so that we can cleanly inject a suffix to it 
+def md_pad(msg, fmt):
     msg_len = len(msg)
     #add the 1 bit (0b10000000)
     msg += b'\x80'
     #pad out with zeros except for one block at the end 
     msg += b'\x00' * ((56 - (msg_len + 1) % 64) % 64)
     #add length of message at the end in the last block 
-    msg += struct.pack(b'>Q', msg_len * 8)
+    msg += struct.pack(fmt, msg_len * 8)
     return msg 
+
+def sha1_pad(msg):
+    return md_pad(msg, '>Q') 
+
+def md4_pad(msg):
+    return md_pad(msg, '<Q') 
+
 
 
 #================
