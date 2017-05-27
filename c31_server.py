@@ -15,7 +15,7 @@ def verify():
     if insecure_compare(file.encode(), signature):
         return "valid\n", 200
     #no match
-    return "invalid\n", 200
+    return "invalid\n", 500
 
 #byte at a time verification with artificial delays
 def insecure_compare(file, test_sig):
@@ -23,10 +23,12 @@ def insecure_compare(file, test_sig):
     good_sig = get_hmac(file)
     #test against signature byte at a time 
     for i in range(len(good_sig)):
+        if i >= len(test_sig):
+            return False
         if good_sig[i] != test_sig[i]:
             return False
         #add artificial delay
-        time.sleep(.05)
+        time.sleep(.005)
     #hashes match
     return True
 
