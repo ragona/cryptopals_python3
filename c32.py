@@ -1,3 +1,4 @@
+#Run c31; added jitter resistance to C31 so that we can go down to 5ms.
 
 '''
 Break HMAC-SHA1 with a slightly less artificial timing leak
