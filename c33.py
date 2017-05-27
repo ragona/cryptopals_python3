@@ -1,17 +1,6 @@
 from Crypto.Random import random
+from pals import utils
 import hashlib
-
-def modexp(base, exponent, modulus):
-    if modulus == 1:
-        return 0
-    result = 1
-    base = base % modulus
-    while exponent > 0:
-        if (exponent % 2 == 1):
-           result = (result * base) % modulus
-        exponent = exponent >> 1
-        base = (base * base) % modulus
-    return result
 
 '''
 g = public (prime) base, known to Alice, Bob, and Eve. g = 5
@@ -34,14 +23,15 @@ p = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
 
 #generate keys
 a = random.randint(0, 2<<32) % p #alice private key
-A = modexp(g, a, p)              #alice public key
+A = utils.modexp(g, a, p)        #alice public key
 b = random.randint(0, 2<<32) % p #bob private key
-B = modexp(g, b, p)              #bob public key
+B = utils.modexp(g, b, p)        #bob public key
 
 # (your public key ** my private key) % public modulus 
-# gets the same result for both participants 
-s = modexp(B, a, p)
-t = modexp(A, b, p)
+# gets the same result for both participants. this is 
+# the session key
+s = utils.modexp(B, a, p)
+t = utils.modexp(A, b, p)
 
 #verify
 print(s == t)
