@@ -87,6 +87,9 @@ eve = MITMDHClient()
 alice.connect(eve, p, g)
 
 #eve connects with bob 
+alice.connect(eve, p, g)
+
+#eve connects with bob 
 eve.connect(bob, p, g) 
 
 #alice creates a message
