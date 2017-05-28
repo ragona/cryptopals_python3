@@ -47,3 +47,19 @@ class MITMDHClient(DHClient):
 
     def accept_connection(self, p, g, B):
         return p
+
+#futzing with the g value
+class MITM_G_DHClient(DHClient):
+
+    def __init__(self, g_override):
+        self.g_override = g_override
+        super(MITM_G_DHClient, self).__init__()
+
+    def connect(self, partner, p, g):
+        A = modexp(self.g_override, self.a, p) 
+        B = partner.accept_connection(p, self.g_override, A)
+        self.session_key = modexp(B, self.a, p)
+
+    def accept_connection(self, p, g, B):
+        self.session_key = modexp(B, self.a, p)
+        return modexp(self.g_override, self.a, p) 
