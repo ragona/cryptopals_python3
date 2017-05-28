@@ -14,18 +14,6 @@ p = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
          'bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff'
          'fffffffffffff'), 16) #just for formatting
 
-'''
-A->B
-Send "p", "g", "A"
-B->A
-Send "B"
-A->B
-Send AES-CBC(SHA1(s)[0:16], iv=random(16), msg) + iv
-B->A
-Send AES-CBC(SHA1(s)[0:16], iv=random(16), A's msg) + iv
-(In other words, derive an AES key from DH with SHA1, use it in both directions, 
-and do CBC with random IVs appended or prepended to the message).
-'''
 class DHClient:
 
     def __init__(self):
@@ -37,13 +25,13 @@ class DHClient:
         #generate my public key
         A = modexp(g, self.a, p) 
         #get their public key
-        B = partner.respond(p, g, A)
+        B = partner.accept_connection(p, g, A)
         #set the session key
         self.session_key = modexp(B, self.a, p)
 
     #responds to key exchange request from partner
     #returns public key, sets session key
-    def respond(self, p, g, B):
+    def accept_connection(self, p, g, B):
         #set the session key 
         self.session_key = modexp(B, self.a, p)
         #return my public key
@@ -60,7 +48,19 @@ class DHClient:
         iv = message[-16:]
         return AES.new(self.aes_key(), AES.MODE_CBC, iv).decrypt(message[:16])
 
+#public keys are swapped out with p 
+class MITMDHClient(DHClient):
 
+    def connect(self, partner, p, g):
+        partner.accept_connection(p, g, p)
+        self.session_key = modexp(p, self.a, p)
+
+    def accept_connection(self, p, g, B):
+        return p
+
+#=================
+# The normal case
+#=================
 
 #create clients
 alice = DHClient()
@@ -74,6 +74,29 @@ msg = alice.encrypt_message(b'foo')
 
 print(bob.decrypt_message(msg))
 print(alice.decrypt_message(msg))
+
+#=================
+# The MITM case
+#=================
+
+alice = DHClient()
+bob = DHClient()
+eve = MITMDHClient()
+
+#alice tries to handshake with bob, but uh oh, she's talking to eve
+alice.connect(eve, p, g)
+
+#eve connects with bob 
+eve.connect(bob, p, g) 
+
+#alice creates a message
+msg = bob.encrypt_message(b'banana')
+
+#everyone can read these messages
+print('bob', bob.decrypt_message(msg))
+print('eve', eve.decrypt_message(msg))
+print('alice', alice.decrypt_message(msg))
+
 
 '''
 Implement a MITM key-fixing attack on Diffie-Hellman with parameter injection
@@ -93,7 +116,6 @@ Send AES-CBC(SHA1(s)[0:16], iv=random(16), A's msg) + iv
 and do CBC with random IVs appended or prepended to the message).
 
 Now implement the following MITM attack:
-
 A->M
 Send "p", "g", "A"
 M->B
@@ -110,9 +132,10 @@ B->M
 Send AES-CBC(SHA1(s)[0:16], iv=random(16), A's msg) + iv
 M->A
 Relay that to A
-M should be able to decrypt the messages. "A" and "B" in the protocol --- the public 
-keys, over the wire --- have been swapped out with "p". Do the DH math on this quickly 
-to see what that does to the predictability of the key.
+M should be able to decrypt the messages. "A" and "B" in the 
+protocol --- the public keys, over the wire --- have been swapped 
+out with "p". Do the DH math on this quickly to see what that does 
+to the predictability of the key.
 
 Decrypt the messages from M's vantage point as they go by.
 
