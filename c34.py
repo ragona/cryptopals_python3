@@ -87,13 +87,10 @@ eve = MITMDHClient()
 alice.connect(eve, p, g)
 
 #eve connects with bob 
-alice.connect(eve, p, g)
-
-#eve connects with bob 
 eve.connect(bob, p, g) 
 
 #alice creates a message
-msg = bob.encrypt_message(b'banana')
+msg = alice.encrypt_message(b'banana')
 
 #everyone can read these messages
 print('bob', bob.decrypt_message(msg))
