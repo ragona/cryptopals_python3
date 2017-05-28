@@ -1,8 +1,4 @@
-from Crypto.Cipher import AES
-from Crypto import Random
-from pals.utils import modexp, pad 
-import random 
-import hashlib
+from pals.dh import DHClient, MITMDHClient
 
 g = 2
 p = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
@@ -13,50 +9,6 @@ p = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
          'c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552'
          'bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff'
          'fffffffffffff'), 16) #just for formatting
-
-class DHClient:
-
-    def __init__(self):
-        self.a = random.randint(0, 2<<32)
-
-    #initiates key exchange with a partner. provides p, g, and public key
-    #partner will repsond with public key, which is used to set session key
-    def connect(self, partner, p, g):
-        #generate my public key
-        A = modexp(g, self.a, p) 
-        #get their public key
-        B = partner.accept_connection(p, g, A)
-        #set the session key
-        self.session_key = modexp(B, self.a, p)
-
-    #responds to key exchange request from partner
-    #returns public key, sets session key
-    def accept_connection(self, p, g, B):
-        #set the session key 
-        self.session_key = modexp(B, self.a, p)
-        #return my public key
-        return modexp(g, self.a, p) 
-
-    def aes_key(self):
-        return hashlib.sha1(str(self.session_key).encode()).hexdigest()[:16]
-
-    def encrypt_message(self, message):
-        iv = Random.get_random_bytes(16)
-        return AES.new(self.aes_key(), AES.MODE_CBC, iv).encrypt(pad(message, 16)) + iv
-
-    def decrypt_message(self, message):
-        iv = message[-16:]
-        return AES.new(self.aes_key(), AES.MODE_CBC, iv).decrypt(message[:16])
-
-#public keys are swapped out with p 
-class MITMDHClient(DHClient):
-
-    def connect(self, partner, p, g):
-        partner.accept_connection(p, g, p)
-        self.session_key = modexp(p, self.a, p)
-
-    def accept_connection(self, p, g, B):
-        return p
 
 #=================
 # The normal case
