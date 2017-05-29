@@ -45,8 +45,9 @@ class SRPSession:
         #client sends hash to be verified 
         kH = self.client.hashed_session()
         #server validates
-        return server.validate_session_key(self.uid, kH)
-
+        valid = server.validate_session_key(self.uid, kH)
+        if not valid:
+            raise Exception('invalid session')
 
 class SRPServer:
 
@@ -75,7 +76,7 @@ class SRPServer:
     def generate_session_key(self, uid, A, u):
         user = self.users[uid]
         s1 = pow(user.v, u, N)
-        S = pow(A * pow(user.v, u, N), user.b, N) #used modexp here -- differs from spec. researching.
+        S = pow(A * pow(user.v, u, N), user.b, N) 
         self.K = hash(S)
         return self.K
 
@@ -116,8 +117,8 @@ server.add_user(I, P)
 session = SRPSession(client, server)
 #do the initial handshake 
 session.handshake()
-#see if it's valid
-print(session.validate())
+#validate the session
+session.validate()
 
 
 '''
