@@ -1,3 +1,33 @@
+import hashlib
+import random
+from pals.utils import modexp
+
+g = 2
+k = 3
+N = 7 #should be a NIST Prime
+I = 'me@here.com'
+P = 'p@$$W0RD'
+
+
+class SRPServer:
+
+    def __init__(self):
+        self.users = {}
+
+    def add_user(email, password):
+        salt = random.randrange(0, 2<<32)
+        xH = hashlib.sha256((str(salt) + P).encode()).hexdigest()
+        x = int(xH, 16)
+        v = modexp(g, x, N)
+
+        self.users[email] = User(salt, v)
+
+    class User:
+        def __init__(self, salt, v):
+            self.salt, self.v = email, salt, v
+
+
+server = SRPServer()
 
 '''
 Implement Secure Remote Password (SRP)
