@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import random
+import requests
 
 g = 2
 k = 3
@@ -65,10 +66,11 @@ class SRPServer:
         v = pow(g, x, N)
         self.users[uid] = self.User(salt, v)
 
-    def handshake_response(self, uid, a):
+    def handshake_response(self, uid, A):
         user = self.users[uid]
         user.start_session()
         self.B = (k * user.v + pow(g, user.b, N)) % N
+        self.u = H(A, self.B)
         return user.salt, self.B
 
     def generate_session_key(self, uid, A, u):
