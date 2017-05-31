@@ -33,7 +33,7 @@ class SRPSession:
         #get user id and client ephemeral key
         self.uid, self.A = self.client.start_handshake()
         #get salt and server ephemeral key
-        self.salt, self.B = self.server.handshake_response(self.uid, self.A)
+        self.salt, self.B = self.server.start_session(self.uid, self.A)
         #generate scrambling parameter
         self.u = H(self.A, self.B)
 
@@ -52,37 +52,43 @@ class SRPServer:
 
     class User:
         def __init__(self, salt, v):
+            self.hK = -1
             self.salt, self.v = salt, v
 
         def start_session(self):
             self.b = random.randrange(0, 2<<32) 
 
+        def generate_session_key(self):
+            S = pow(self.A * pow(self.v, self.u, N), self.b, N) 
+            self.K = hash(S)
+            self.hK = hmac_sha256(self.salt, self.K)
+            
     def __init__(self):
         self.users = {}
 
     def add_user(self, uid, password):
         salt = random.randrange(0, 2<<32)
-        x = H(salt, password)
-        v = pow(g, x, N)
+        v = self._v(salt, password)
         self.users[uid] = self.User(salt, v)
 
-    def handshake_response(self, uid, A):
+    def start_session(self, uid, A):
         user = self.users[uid]
         user.start_session()
-        self.B = (k * user.v + pow(g, user.b, N)) % N
-        self.u = H(A, self.B)
-        return user.salt, self.B
-
-    def generate_session_key(self, uid, A, u):
-        user = self.users[uid]
-        s1 = pow(user.v, u, N)
-        S = pow(A * pow(user.v, u, N), user.b, N) 
-        self.K = hash(S)
-        return self.K
+        user.A = A
+        user.B = self._B(user.v, user.b)
+        user.u = H(A, user.B)
+        user.generate_session_key()
+        return user.salt, user.B
 
     def validate_session_key(self, uid, K):
-        user = self.users[uid]
-        return K == hmac_sha256(user.salt, self.K)
+        return K == self.users[uid].hK
+
+    def _B(self, v, b):
+        return (k * v + pow(g, b, N)) % N
+
+    def _v(self, salt, password):
+        x = H(salt, password)
+        return pow(g, x, N)
 
 
 class SRPClient:    
@@ -97,10 +103,9 @@ class SRPClient:
         return self.uid, self.A
 
     def generate_session_key(self, salt, B, u):
-        self.salt = salt
-        x = H(salt, self.password)
+        self.salt = int(salt)
+        x = H(int(salt), self.password)
         S = pow(B - k * pow(g, x, N), self.a + u * x, N)
         self.K = hash(S)
-
-    def hashed_session(self):
-        return hmac_sha256(self.salt, self.K)
+        self.hK = hmac_sha256(self.salt, self.K)
+        return self.hK
