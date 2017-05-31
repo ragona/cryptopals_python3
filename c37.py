@@ -4,7 +4,17 @@ import getpass
 import requests
 
 #constants
-I = input('User:')
+N = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
+         'e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd'
+         '3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec'
+         '6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f'
+         '24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361'
+         'c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552'
+         'bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff'
+         'fffffffffffff'), 16) #just for formatting
+zero_key = True if input("zero key? (y/n):") == 'y' else False
+crack = True if input("N key? (y/n):") == 'y' else False
+I = input('User: ')
 P = getpass.getpass()
 
 def kvparse(s):
@@ -15,27 +25,58 @@ def kvparse(s):
 #create client
 client = SRPClient(I, P)
 
-#handshake
+#handshake out
 uid, A = client.start_handshake()
+#tamper A
+if zero_key:
+    A = 0
+elif crack:
+    A = N ** 2
+print("=====================")
+print("1a. CLIENT HANDSHAKE")
+print("=====================")
+print("N:", N)
+print("uid:", uid)
+print("A:", A)
+#send request
 url = 'http://localhost:5000/handshake?uid={}&A={}'.format(uid, A)
 res = kvparse(requests.get(url).text)
+#response
 salt = int(res["salt"])
 B = int(res["B"])
+print("=====================")
+print("1b. SERVER RESPONSE")
+print("=====================")
+print("salt:", salt)
+print("B:", B)
 
 #client generates session key and validates
-hK = client.generate_session_key(salt, B, H(A, B))
+S, K, hK = client.generate_session_key(salt, B, H(A, B))
+print("=====================")
+print("2a. CLIENT SESSION")
+print("=====================")
+print("S:", S)
+print("K:", K)
+print("hK:", hK)
+#send request
 url = 'http://localhost:5000/validate?uid={}&session={}'.format(uid, hK)
 res = requests.get(url)
-
+#check status
+print("=====================")
+print("2b. SERVER RESPONSE")
 if res.status_code == 200:
     print('======================')
-    print('authenticated')
+    print('200: authorized')
+    print('======================')
+elif res.status_code == 401:
+    print('======================')
+    print('401: not authorized')
     print('======================')
 else:
     print('======================')
-    print('rejected')
+    print(res.status_code)
     print('======================')
-#
+
 
 '''
     def handshake(self):

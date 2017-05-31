@@ -60,6 +60,7 @@ class SRPServer:
 
         def generate_session_key(self):
             S = pow(self.A * pow(self.v, self.u, N), self.b, N) 
+            print("S:", S)
             self.K = hash(S)
             self.hK = hmac_sha256(self.salt, self.K)
             
@@ -108,4 +109,4 @@ class SRPClient:
         S = pow(B - k * pow(g, x, N), self.a + u * x, N)
         self.K = hash(S)
         self.hK = hmac_sha256(self.salt, self.K)
-        return self.hK
+        return S, self.K, self.hK
