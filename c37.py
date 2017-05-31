@@ -12,8 +12,10 @@ N = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
          'c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552'
          'bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff'
          'fffffffffffff'), 16) #just for formatting
+#get data from user
 zero_key = True if input("zero key? (y/n):") == 'y' else False
-crack = True if input("N key? (y/n):") == 'y' else False
+N_key = True if input("N key? (y/n):") == 'y' else False
+Nx2_key = True if input("N*2 key? (y/n):") == 'y' else False
 I = input('User: ')
 P = getpass.getpass()
 
@@ -25,13 +27,21 @@ def kvparse(s):
 #create client
 client = SRPClient(I, P)
 
+
 #handshake out
-uid, A = client.start_handshake()
-#tamper A
 if zero_key:
-    A = 0
-elif crack:
-    A = N ** 2
+    print("ZERO KEY")
+    uid, A = client.start_handshake(0)
+elif N_key:
+    print("N KEY")
+    uid, A = client.start_handshake(N)
+elif Nx2_key:
+    print("N*2 KEY")
+    uid, A = client.start_handshake(N*2)
+else:
+    print("NORMAL KEY")
+    uid, A = client.start_handshake()
+
 print("=====================")
 print("1a. CLIENT HANDSHAKE")
 print("=====================")

@@ -60,7 +60,9 @@ class SRPServer:
 
         def generate_session_key(self):
             S = pow(self.A * pow(self.v, self.u, N), self.b, N) 
+            print("===========")
             print("S:", S)
+            print("===========")
             self.K = hash(S)
             self.hK = hmac_sha256(self.salt, self.K)
             
@@ -98,9 +100,11 @@ class SRPClient:
         self.uid = uid
         self.password = password
 
-    def start_handshake(self):
+    def start_handshake(self, override_A = -1):
         self.a = random.randrange(0, 2<<32)
         self.A = pow(g, self.a, N)
+        if override_A != -1:
+            self.A = override_A
         return self.uid, self.A
 
     def generate_session_key(self, salt, B, u):
