@@ -17,12 +17,9 @@ def handshake():
     #parse url
     uid = request.args.get("uid")
     A = int(request.args.get("A"))
-    print("************************")
-    print("GOT A:", A)
-    print("************************")
     #we don't want to provide a way to easily figure out 
     #which usernames are and are not valid, so this returns
-    #response that look real but obviously can't be used
+    #a response that looks real but obviously can't be used
     if uid not in server.users:
         return fake_response(), 200
     #get server response
