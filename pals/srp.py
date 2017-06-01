@@ -33,16 +33,14 @@ class SRPSession:
         #get user id and client ephemeral key
         self.uid, self.A = self.client.start_handshake()
         #get salt and server ephemeral key
+        #this also causes server to generate u and session key
         self.salt, self.B = self.server.start_session(self.uid, self.A)
         #generate scrambling parameter
         self.u = H(self.A, self.B)
 
     def validate(self):
         #both generate session keys
-        self.client.generate_session_key(self.salt, self.B, self.u)
-        self.server.generate_session_key(self.uid, self.A, self.u)
-        #client sends hash to be verified 
-        kH = self.client.hashed_session()
+        S, K, kH = self.client.generate_session_key(self.salt, self.B, self.u)
         #server validates
         valid = self.server.validate_session_key(self.uid, kH)
         if not valid:
