@@ -1,5 +1,14 @@
+'''
+This is the client for the challenge. It has a bunch of 
+debug logging to make it easier to see what the various 
+parameters are. The server is in pals/srp_server.py and
+that file must be running in order for the client to 
+connect to it. The server has a single user in it with
+the username 'foo' password 'bar'. 
+'''
+
 # from pals import srp_server
-from pals.srp import SRPClient, H
+from pals.srp import SRPClient, H, hash, hmac_sha256
 import getpass
 import requests
 
@@ -12,34 +21,35 @@ N = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
          'c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552'
          'bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff'
          'fffffffffffff'), 16) #just for formatting
-#get data from user
-zero_key = True if input("zero key? (y/n):") == 'y' else False
-N_key = True if input("N key? (y/n):") == 'y' else False
-Nx2_key = True if input("N*2 key? (y/n):") == 'y' else False
-I = input('User: ')
-P = getpass.getpass()
 
+#helper method for parsing server key/value repsonse
 def kvparse(s):
     fields = s.split(";")
     pairs = [f.split("=") for f in fields]
     return {p[0]:p[1] for p in pairs}
 
+#===================
+# user input 
+#===================
+
+#series of flags to send bad A values
+A_override = int(input("A override? (0=normal,1=zero,2=N,3=N*2): ".strip()))
+
+#username + password
+I = input('User: ')
+P = getpass.getpass()
+
 #create client
 client = SRPClient(I, P)
 
-
 #handshake out
-if zero_key:
-    print("ZERO KEY")
+if A_override == 1:
     uid, A = client.start_handshake(0)
-elif N_key:
-    print("N KEY")
+elif A_override == 2:
     uid, A = client.start_handshake(N)
-elif Nx2_key:
-    print("N*2 KEY")
+elif A_override == 3:
     uid, A = client.start_handshake(N*2)
 else:
-    print("NORMAL KEY")
     uid, A = client.start_handshake()
 
 print("=====================")
@@ -48,9 +58,11 @@ print("=====================")
 print("N:", N)
 print("uid:", uid)
 print("A:", A)
+
 #send request
 url = 'http://localhost:5000/handshake?uid={}&A={}'.format(uid, A)
 res = kvparse(requests.get(url).text)
+
 #response
 salt = int(res["salt"])
 B = int(res["B"])
@@ -60,17 +72,26 @@ print("=====================")
 print("salt:", salt)
 print("B:", B)
 
-#client generates session key and validates
+#client generates session key
 S, K, hK = client.generate_session_key(salt, B, H(A, B))
+
+#if we're tampering with the A value, this causes the S 
+#values on the server to come out to zero, so we can 
+#generate a hash that matches even without the password
+if A_override != 0:
+    hK = hmac_sha256(salt, hash(0))
+
 print("=====================")
 print("2a. CLIENT SESSION")
 print("=====================")
 print("S:", S)
 print("K:", K)
 print("hK:", hK)
+
 #send request
 url = 'http://localhost:5000/validate?uid={}&session={}'.format(uid, hK)
 res = requests.get(url)
+
 #check status
 print("=====================")
 print("2b. SERVER RESPONSE")
@@ -87,27 +108,6 @@ else:
     print(res.status_code)
     print('======================')
 
-
-'''
-    def handshake(self):
-        #get user id and client ephemeral key
-        self.uid, self.A = self.client.start_handshake()
-        #get salt and server ephemeral key
-        self.salt, self.B = self.server.handshake_response(self.uid, self.A)
-        #generate scrambling parameter
-        self.u = H(self.A, self.B)
-
-    def validate(self):
-        #both generate session keys
-        self.client.generate_session_key(self.salt, self.B, self.u)
-        self.server.generate_session_key(self.uid, self.A, self.u)
-        #client sends hash to be verified 
-        kH = self.client.hashed_session()
-        #server validates
-        valid = self.server.validate_session_key(self.uid, kH)
-        if not valid:
-            raise Exception('invalid session')
-'''
 
 '''
 Break SRP with a zero key
