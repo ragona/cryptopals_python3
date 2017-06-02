@@ -15,9 +15,12 @@ you had a leaked password database, you'd only have to do the first
 calculation of x and v, and if you got a v that matched the stored 
 verifier you'd have the password, and this would be a bit faster
 than the MITM version. 
+
+Note: Not uploading a 
 '''
 
 import hashlib
+import tqdm
 from pals.srp import H, hash, hmac_sha256
 from Crypto.Random import random
 
@@ -37,7 +40,7 @@ n = int(('ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024'
 rand = lambda size: random.randint(0, 2<<size)
 
 #shared info
-password = 'banananutbread'
+password = 'affliction' #near the beginning of dictionary
 
 #server 
 salt = rand(32)
@@ -66,6 +69,24 @@ sHK = hmac_sha256(salt, sK)
 
 #verify
 print(sHK == cHK)
+
+#start here for the brute force; if you can mitm and act as the 
+#server so you have all variables necessary to generate the server
+#side S, starting from x and v, then you can just test dictionary
+#passwords and catch easy passwords by testing against the hmac
+with open('/usr/share/cracklib/cracklib-small') as f:
+    i = 0
+    for line in tqdm.tqdm(f, total=54763):
+        x = H(salt, line.strip())
+        v = pow(g, x, n)
+        S = pow((A * pow(v, u, n)), b, n)
+        K = hash(str(S))
+        hK = hmac_sha256(salt, K)
+        if hK == cHK:
+            print("*****************")
+            print("password:", line.strip())
+            print("*****************")
+            break
 
 
 '''
