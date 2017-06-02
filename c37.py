@@ -96,17 +96,17 @@ res = requests.get(url)
 print("=====================")
 print("2b. SERVER RESPONSE")
 if res.status_code == 200:
-    print('======================')
+    print("=====================")
     print('200: authorized')
-    print('======================')
+    print('=====================')
 elif res.status_code == 401:
-    print('======================')
+    print('=====================')
     print('401: not authorized')
-    print('======================')
+    print('=====================')
 else:
-    print('======================')
+    print('=====================')
     print(res.status_code)
-    print('======================')
+    print('=====================')
 
 
 '''
