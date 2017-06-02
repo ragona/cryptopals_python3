@@ -99,7 +99,6 @@ class SRPClient:
         self.a = random.randrange(0, 2<<32)
         self.A = pow(g, self.a, N)
         if override_A != -1:
-            self.a = override_A
             self.A = override_A
         return self.uid, self.A
 
