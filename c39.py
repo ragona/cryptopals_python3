@@ -1,16 +1,53 @@
+'''
+A few notes: 
+- I got my own invmod and e_gcd working by following 
+wikipedia pseudocode, but it makes my brain hurt so I 
+swapped it out with the pycrypto number library version 
+for brevity. 
+- Using an e of 3 means you need to try different 
+primes until you get one that will work out to be properly 
+inverted, so I'm using 2**16+1 which I'm told is commonly 
+used by RSA. 
+- I don't quite get how you're supposed to 
+encapsulate the keys -- when I see RSA keys they're not two 
+numbers, they're just one giant b64 blob. Is (e, n) 
+contained within there and labeled somehow?  
+'''
+
 from Crypto.Util import number
 from os import urandom
+from binascii import hexlify, unhexlify
 
-p = number.getPrime(1024, urandom)
-q = number.getPrime(1024, urandom)
-n = p * q
-et = (p-1)*(q-1)
-e = 3
-d = number.invmod(e, et)
-A = (e, n)
-a = (d, n)
-#wtf is c? 
+def bytes_to_int(b):
+    return int(hexlify(b), 16) 
 
+def bytes_from_int(i):
+    return unhexlify(hex(i)[2:])
+
+class RSA:
+
+    def generate_keys(key_size):
+        p = number.getPrime(key_size // 2, urandom)
+        q = number.getPrime(key_size // 2, urandom)
+        n = p * q
+        et = (p-1)*(q-1)
+        e = 65537 #TODO: should this be random? need to research.
+        d = number.inverse(e, et)
+        return (e, n), (d, n) #public, private
+
+    def encrypt(m, key):
+        return pow(bytes_to_int(m), key[0], key[1])#e, n)
+
+    def decrypt(m, key):
+        c = pow(m, key[0], key[1])#d, n)
+        return bytes_from_int(c)
+
+msg = b'secret message'
+pub, pri = RSA.generate_keys(1024)
+ciphertext = RSA.encrypt(msg, pub)
+plaintext = RSA.decrypt(ciphertext, pri)
+
+print(plaintext == msg)
 '''
 Implement RSA
 There are two annoying things about implementing RSA. Both of 
