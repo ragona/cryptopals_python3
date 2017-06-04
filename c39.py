@@ -2,8 +2,15 @@ from Crypto.Util import number
 from os import urandom
 
 p = number.getPrime(1024, urandom)
+q = number.getPrime(1024, urandom)
+n = p * q
+et = (p-1)*(q-1)
+e = 3
+d = number.invmod(e, et)
+A = (e, n)
+a = (d, n)
+#wtf is c? 
 
-print(p)
 '''
 Implement RSA
 There are two annoying things about implementing RSA. Both of 
