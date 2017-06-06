@@ -25,17 +25,8 @@ class RSA:
         return (e, n), (d, n) #public, private
 
     def encrypt(m, key):
-        return pow(bytes_to_int(m), key[0], key[1])#e, n)
+        return pow(bytes_to_int(m), key[0], key[1]) #e, n
 
     def decrypt(m, key):
-        c = pow(m, key[0], key[1])#d, n)
+        c = pow(m, key[0], key[1]) #d, n
         return bytes_from_int(c)
-
-    def _d():
-        p = number.getPrime(key_size // 2, urandom)
-        q = number.getPrime(key_size // 2, urandom)
-        n = p * q
-        et = (p-1)*(q-1)
-        e = 3#65537 #TODO: should this be random? need to research.
-        d = number.inverse(e, et)
-        return d
