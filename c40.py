@@ -1,5 +1,25 @@
+'''
+why in god's name does this work 
+I gotta go back to math class
+what is a modular inverse even
+I need to go redo c39 and focus on egcd + invmod
+'''
+
 from Crypto.Util.number import inverse
-from pals.RSA import RSA
+from pals.RSA import RSA, bytes_from_int
+import math, time
+
+#binary search
+def cbrt(n):
+    lo = 0
+    hi = n
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if mid**3 < n:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
 
 msg = b'some secret message'
 
@@ -19,14 +39,15 @@ m_s_0 = n_1 * n_2
 m_s_1 = n_0 * n_2
 m_s_2 = n_0 * n_1
 
-N_012 = n_0 * n_1 * n_2
+N = n_0 * n_1 * n_2
 
-result = ((c_0 * m_s_0 * inverse(m_s_0, n_0)) +
-          (c_1 * m_s_1 * inverse(m_s_1, n_1)) +
-          (c_2 * m_s_2 * inverse(m_s_2, n_2)) % N_012)
+r_0 = c_0 * m_s_0 * inverse(m_s_0, n_0)
+r_1 = c_1 * m_s_1 * inverse(m_s_1, n_1)
+r_2 = c_2 * m_s_2 * inverse(m_s_2, n_2)
 
+result = (r_0 + r_1 + r_2) % N 
 
-#do cube root 
+print(bytes_from_int(cbrt(result)))
 
 '''
 Implement an E=3 RSA Broadcast attack
