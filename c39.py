@@ -17,7 +17,7 @@ contained within there and labeled somehow?
 from pals.RSA import RSA
 
 msg = b'secret message'
-pub, pri = RSA.generate_keys(1024)
+pub, pri = RSA.generate_keys(1024, 3)
 ciphertext = RSA.encrypt(msg, pub)
 plaintext = RSA.decrypt(ciphertext, pri)
 
