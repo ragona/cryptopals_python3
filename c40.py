@@ -7,7 +7,6 @@ I need to go redo c39 and focus on egcd + invmod
 
 from Crypto.Util.number import inverse
 from pals.RSA import RSA, bytes_from_int
-import math, time
 
 #binary search
 def cbrt(n):
@@ -23,18 +22,23 @@ def cbrt(n):
 
 msg = b'some secret message'
 
+#three separate key pairs, store the public key
+#in theory only the public key would be available
 pub_0 = RSA.generate_keys(1024, 3)[0]
 pub_1 = RSA.generate_keys(1024, 3)[0]
 pub_2 = RSA.generate_keys(1024, 3)[0]
 
+#the ciphertexts
 c_0 = RSA.encrypt(msg, pub_0)
 c_1 = RSA.encrypt(msg, pub_1)
 c_2 = RSA.encrypt(msg, pub_2)
 
+#the n values from each key
 n_0 = pub_0[1]
 n_1 = pub_1[1]
 n_2 = pub_2[1]
 
+#do the thing
 m_s_0 = n_1 * n_2
 m_s_1 = n_0 * n_2
 m_s_2 = n_0 * n_1
