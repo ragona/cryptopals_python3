@@ -1,4 +1,14 @@
 '''
+6/7, more study:
+Alright, been watching math videos and reading. GCD is simple, 
+and the difference between GCD and the *extended* elucidean 
+algorithm is, as far as I can tell, Bézout's identity. These 
+are "integers x and y such that ax + by = d".  To do the modinv
+what you want is "x" so that you can return x % m, where m
+is the original modulus. You can only do this successfully
+if the last remainder is not 1. TODO: Run a few numbers through
+this so I understand the "is not 1" requirement.
+
 A few notes: 
 - I got my own invmod and e_gcd working by following 
 wikipedia pseudocode, but it makes my brain hurt so I 
