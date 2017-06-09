@@ -10,7 +10,7 @@ def bytes_from_int(i):
 
 class RSA:
 
-    def generate_keys(key_size, e=65537):
+    def generate_keys(key_size=1024, e=65537):
         #d of 1 indicates that the number didn't inverse 
         #appropriately, so we try again until it works.
         #this doesn't happen (often?) when e is 65537, but
