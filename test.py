@@ -13,4 +13,6 @@ import c17, c18, c19, c20, c21, c22, c23 #skipping c24, takes a while to run
 #set 4 
 import c25, c26, c27, c28, c29, c30, c32 #skipping c31, server
 #set 5
-import c33, c34, c35, c36
+import c33, c34, c35, c36, c38, c39, c40 #skipping c37, server
+#set 6
+import c41
