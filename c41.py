@@ -38,12 +38,12 @@ def unpadded_recovery_oracle(pub_key, C):
     P = (bytes_to_int(nP) // S) % N
     return bytes_from_int(P)
 
-
-
+#this happens somewhere else 
 blob = generate_blob('555-55-5555')
+#we capture this encrypted blob, along with the pub key
 C = encrypt_blob(blob)
+#we trivially decrypt the blob with the ciphertext and the pub key
 recovered = unpadded_recovery_oracle(public, C)
-
 
 print('original:', blob)
 print('recovered:', recovered)
