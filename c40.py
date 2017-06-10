@@ -6,7 +6,7 @@ I need to go redo c39 and focus on egcd + invmod
 '''
 
 from Crypto.Util.number import inverse
-from pals.RSA import RSA, bytes_from_int
+from pals.RSA import RSA, int_to_bytes
 
 #binary search
 def cbrt(n):
@@ -20,7 +20,7 @@ def cbrt(n):
             hi = mid
     return lo
 
-msg = b'some secret message'
+msg = b'some other secret message'
 
 #three separate key pairs, store the public key
 #in theory only the public key would be available
@@ -51,7 +51,7 @@ r_2 = c_2 * m_s_2 * inverse(m_s_2, n_2)
 
 result = (r_0 + r_1 + r_2) % N 
 
-print(bytes_from_int(cbrt(result)))
+print(int_to_bytes(cbrt(result)))
 
 '''
 Implement an E=3 RSA Broadcast attack

@@ -5,7 +5,7 @@ from binascii import hexlify, unhexlify
 def bytes_to_int(b):
     return int(hexlify(b), 16) 
 
-def bytes_from_int(i):
+def int_to_bytes(i):
     return unhexlify(hex(i)[2:])
 
 class RSA:
@@ -29,4 +29,4 @@ class RSA:
 
     def decrypt(m, key):
         c = pow(m, key[0], key[1]) #d, n
-        return bytes_from_int(c)
+        return int_to_bytes(c)

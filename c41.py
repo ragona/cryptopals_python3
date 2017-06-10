@@ -23,20 +23,30 @@ def decypher_blob(ciphertext):
     seen.add(hsh)
     return msg
 
+def unpadded_recovery_oracle(pub_key, C):
+    #setup attack variables
+    E = pub_key[0]
+    N = pub_key[1] 
+    S = 2<<32 % N  
+    #create a reversible bignum different from C 
+    #the server will decrypt it, and then we can
+    #just reverse this operation to get the plain
+    nC = (pow(S, E, N) * C) % N
+    #send it back to the server
+    nP = decypher_blob(nC)
+    #reverse it 
+    P = (bytes_to_int(nP) // S) % N
+    return bytes_from_int(P)
+
+
+
 blob = generate_blob('555-55-5555')
 C = encrypt_blob(blob)
-E = public[0]
-N = public[1] 
-S = 2<<32 % N  
+recovered = unpadded_recovery_oracle(public, C)
 
-a = decypher_blob(C)
-a = bytes_to_int(a)
-nC = (pow(S, E, N) * C) % N
-nP = decypher_blob(nC)
-P = (bytes_to_int(nP) // S) % N
 
 print('original:', blob)
-print('recovered:', bytes_from_int(P))
+print('recovered:', recovered)
 
 '''
 Implement unpadded message recovery oracle
