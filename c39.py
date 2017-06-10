@@ -31,7 +31,7 @@ pub, pri = RSA.generate_keys(1024, 3)
 ciphertext = RSA.encrypt(msg, pub)
 plaintext = RSA.decrypt(ciphertext, pri)
 
-print(plaintext == msg)
+print(plaintext)
 
 '''
 Implement RSA
