@@ -1,5 +1,5 @@
 from Crypto.Util.number import inverse
-from pals.RSA import RSA, bytes_from_int
+from pals.RSA import RSA, bytes_from_int, bytes_to_int
 import json, time, hashlib
 
 public, private = RSA.generate_keys()
@@ -24,15 +24,19 @@ def decypher_blob(ciphertext):
     return msg
 
 blob = generate_blob('555-55-5555')
-c = encrypt_blob(blob)
+C = encrypt_blob(blob)
 E = public[0]
 N = public[1] 
-S = 10 % N
+S = 2<<32 % N  
 
+a = decypher_blob(C)
+a = bytes_to_int(a)
+nC = (pow(S, E, N) * C) % N
+nP = decypher_blob(nC)
+P = (bytes_to_int(nP) // S) % N
 
-print(decypher_blob(c))
-print(decypher_blob(c))
-print(decypher_blob(c))
+print('original:', blob)
+print('recovered:', bytes_from_int(P))
 
 '''
 Implement unpadded message recovery oracle
