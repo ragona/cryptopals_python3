@@ -17,7 +17,7 @@ for brevity.
 - Using an e of 3 means you need to try different 
 primes until you get one that will work out to be properly 
 inverted, so I'm using 2**16+1 which I'm told is commonly 
-used by RSA. 
+used in RSA implementations. 
 - I don't quite get how you're supposed to 
 encapsulate the keys -- when I see RSA keys they're not two 
 numbers, they're just one giant b64 blob. Is (e, n) 
