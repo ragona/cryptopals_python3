@@ -17,9 +17,12 @@ class RSA:
         #does happen often when e is 3. 
         d = 1
         while d == 1:
-            p = number.getPrime(key_size // 2, urandom)
-            q = number.getPrime(key_size // 2, urandom)
-            n = p * q
+            #this block ensures that n is the right size
+            n = 0
+            while n.bit_length() != key_size:
+                p = number.getPrime(key_size // 2, urandom)
+                q = number.getPrime(key_size // 2, urandom)
+                n = p * q
             et = (p-1)*(q-1)
             d = number.inverse(e, et)
         return (e, n), (d, n) #public, private
