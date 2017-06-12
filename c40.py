@@ -3,6 +3,18 @@ why in god's name does this work
 I gotta go back to math class
 what is a modular inverse even
 I need to go redo c39 and focus on egcd + invmod
+
+edit 6/12:
+
+Oh, this works because with an exponent of 3 RSA 
+is just encryption is just cubing a number mod
+the public encryption modulus:
+
+    c = m ** 3 % n
+
+... and then some CRT shit happens and I don't 
+quite get it again. 
+
 '''
 
 from Crypto.Util.number import inverse
@@ -38,7 +50,8 @@ n_0 = pub_0[1]
 n_1 = pub_1[1]
 n_2 = pub_2[1]
 
-#do the thing
+#okay I don't understand the part below here, and I assume this 
+#is the chinese remainder theorem part. 
 m_s_0 = n_1 * n_2
 m_s_1 = n_0 * n_2
 m_s_2 = n_0 * n_1
