@@ -1,5 +1,5 @@
 from pals.RSA import RSA
-import hashlib, base64, binascii 
+import re, hashlib, base64, binascii 
 
 '''
 RFC 2313: https://tools.ietf.org/html/rfc2313
@@ -42,12 +42,23 @@ def pkcs115_hash_pad(M, n):
     PS = (k - 3 - len(D)) * b'\xFF' 
     return b'\x00' + BT + PS + b'\x00' + D 
 
+def verify_padding(s):
+    res = re.search(b'\x00\x01\xFF+?\x00', s)
+    if res is None:
+        return False
+    return True
+
+def fake_hash():
+    return b'\x00\x01\xFF\xFF\x00'
+
 msg = b'hi mom'
 pub, pri = RSA.generate_keys(1024, 3)
 
 x = pkcs115_hash_pad(msg, pub[1])
 
-print(x)
+print(verify_padding(fake_hash()))
+print(verify_padding(b'banana'))
+
 '''
 Bleichenbacher's e=3 RSA Attack
 Crypto-tourism informational placard.
