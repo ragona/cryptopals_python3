@@ -3,10 +3,10 @@ from os import urandom
 from binascii import hexlify, unhexlify
 
 def bytes_to_int(b):
-    return int(hexlify(b), 16) 
+    return int.from_bytes(b, byteorder='big') 
 
 def int_to_bytes(i):
-    return unhexlify(hex(i)[2:])
+    return i.to_bytes((i.bit_length() + 7) // 8, 'big')
 
 class RSA:
 
