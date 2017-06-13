@@ -1,4 +1,4 @@
-from pals.RSA import RSA
+from pals.RSA import RSA, bytes_to_int, int_to_bytes
 import re, hashlib, base64, binascii 
 
 '''
@@ -34,7 +34,6 @@ EB = 00 || BT || PS || 00 || D .
    encryption block EB equal to k.
 
 '''
-
 def pkcs115_hash_pad(M, n):
     D = hashlib.sha1(M).digest()
     k = n.bit_length() // 8
@@ -42,23 +41,29 @@ def pkcs115_hash_pad(M, n):
     PS = (k - 3 - len(D)) * b'\xFF' 
     return b'\x00' + BT + PS + b'\x00' + D 
 
-def verify_padding(s):
-    res = re.search(b'\x00\x01\xFF+?\x00', s)
-    if res is None:
-        return False
-    return True
+def generate_signature(message, private_key):
+    block = pkcs115_hash_pad(message, private_key[1])
+    return RSA.decrypt(bytes_to_int(block), private_key)    
 
-def fake_hash():
-    return b'\x00\x01\xFF\xFF\x00'
+def verify_signature(signature, message, public_key):
+    s = b'\x00' + int_to_bytes(RSA.encrypt(signature, public_key))
+    r = re.compile(b'\x00\x01\xFF+?\x00(.{20})', re.DOTALL) 
+    g = re.match(r, s)
+    if g is None:
+        return False
+    return g[1] == hashlib.sha1(message).digest() 
+
+def fake_signature(message):
+    pre = b'\x00\x01\xFF\xFF\x00'
+    #do stuff
+
+
 
 msg = b'hi mom'
 pub, pri = RSA.generate_keys(1024, 3)
+real_signature = generate_signature(msg, pri)
 
-x = pkcs115_hash_pad(msg, pub[1])
-
-print(verify_padding(fake_hash()))
-print(verify_padding(b'banana'))
-
+print(verify_signature(real_signature, msg, pub))
 '''
 Bleichenbacher's e=3 RSA Attack
 Crypto-tourism informational placard.
