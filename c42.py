@@ -72,4 +72,7 @@ block you want to forge, leaving sufficient trailing zeros at the end to fill
 with garbage, then take the cube-root of that block.
 Forge a 1024-bit RSA signature for the string "hi mom". Make sure your 
 implementation actually accepts the signature!
+
+Note: Hal Finney writeup here: 
+https://www.ietf.org/mail-archive/web/openpgp/current/msg00999.html
 '''
