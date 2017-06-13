@@ -1,13 +1,16 @@
 
 '''
 DSA key recovery from nonce
-Step 1: Relocate so that you are out of easy travel distance of us.
+Step 1: Relocate so that you are out of easy travel 
+distance of us.
 
-Step 2: Implement DSA, up to signing and verifying, including parameter generation.
+Step 2: Implement DSA, up to signing and verifying, 
+including parameter generation.
 
 Hah-hah you're too far away to come punch us.
 
-Just kidding you can skip the parameter generation part if you want; if you do, use these params:
+Just kidding you can skip the parameter generation part 
+if you want; if you do, use these params:
 
  p = 800000000000000089e1855218a0e7dac38136ffafa72eda7
      859f2171e25e65eac698c1702578b07dc2a1076da241c76c6
@@ -26,18 +29,23 @@ Just kidding you can skip the parameter generation part if you want; if you do, 
      9fc95302291
 ("But I want smaller params!" Then generate them yourself.)
 
-The DSA signing operation generates a random subkey "k". You know this because you implemented the DSA sign operation.
+The DSA signing operation generates a random subkey "k". 
+You know this because you implemented the DSA sign operation.
 
-This is the first and easier of two challenges regarding the DSA "k" subkey.
+This is the first and easier of two challenges regarding 
+the DSA "k" subkey.
 
-Given a known "k", it's trivial to recover the DSA private key "x":
+Given a known "k", it's trivial to recover the DSA 
+private key "x":
 
           (s * k) - H(msg)
       x = ----------------  mod q
                   r
-Do this a couple times to prove to yourself that you grok it. Capture it in a function of some sort.
+Do this a couple times to prove to yourself that you grok it. 
+Capture it in a function of some sort.
 
-Now then. I used the parameters above. I generated a keypair. My pubkey is:
+Now then. I used the parameters above. I generated a keypair. 
+My pubkey is:
 
   y = 84ad4719d044495496a3201c8ff484feb45b962e7302e56a392aee4
       abab3e4bdebf2955b4736012f21a08084056b19bcd7fee56048e004
@@ -48,13 +56,16 @@ I signed
 
 For those that envy a MC it can be hazardous to your health
 So be friendly, a matter of life and death, just like a etch-a-sketch
-(My SHA1 for this string was d2d0714f014a9784047eaeccf956520045c45265; I don't know what NIST wants you to do, but when I convert that hash to an integer I get: 0xd2d0714f014a9784047eaeccf956520045c45265).
+(My SHA1 for this string was d2d0714f014a9784047eaeccf956520045c45265; 
+I don't know what NIST wants you to do, but when I convert that hash to 
+an integer I get: 0xd2d0714f014a9784047eaeccf956520045c45265).
 
 I get:
 
   r = 548099063082341131477253921760299949438196259240
   s = 857042759984254168557880549501802188789837994940
-I signed this string with a broken implemention of DSA that generated "k" values between 0 and 2^16. What's my private key?
+I signed this string with a broken implemention of DSA that 
+generated "k" values between 0 and 2^16. What's my private key?
 
 Its SHA-1 fingerprint (after being converted to hex) is:
 
