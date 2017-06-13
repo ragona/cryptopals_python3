@@ -319,3 +319,15 @@ def modexp(base, exponent, modulus):
         exponent = exponent >> 1
         base = (base * base) % modulus
     return result
+
+#binary search
+def cbrt(n):
+    lo = 0
+    hi = n
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if mid**3 < n:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
