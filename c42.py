@@ -1,5 +1,7 @@
 from pals.RSA import RSA, bytes_to_int, int_to_bytes
-import re, hashlib, base64, binascii 
+from pals.utils import cbrt
+from hashlib import sha1
+import re, binascii 
 
 '''
 RFC 2313: https://tools.ietf.org/html/rfc2313
@@ -20,7 +22,7 @@ Version 1.5
    S    signature                X || Y  concatenation of X, Y
                                  ||X||  length in octets of X
 
-EB = 00 || BT || PS || 00 || D .
+   EB = 00 || BT || PS || 00 || D .
 
    The block type BT shall be a single octet indicating the structure of
    the encryption block. For this version of the document it shall have
@@ -35,7 +37,7 @@ EB = 00 || BT || PS || 00 || D .
 
 '''
 def pkcs115_hash_pad(M, n):
-    D = hashlib.sha1(M).digest()
+    D = sha1(M).digest()
     k = n.bit_length() // 8
     BT = b'\x01' 
     PS = (k - 3 - len(D)) * b'\xFF' 
@@ -51,12 +53,15 @@ def verify_signature(signature, message, public_key):
     g = re.match(r, s)
     if g is None:
         return False
-    return g[1] == hashlib.sha1(message).digest() 
+    return g[1] == sha1(message).digest() 
 
-def fake_signature(message):
-    pre = b'\x00\x01\xFF\xFF\x00'
-    #do stuff
 
+def fake_signature(message, n):
+    hsh = sha1(message).digest()
+    zero_padding = (n.bit_length() // 8 - 4 - len(hsh)) * b'\x00'
+    block = b'\x00\x01\xFF\x00' + hsh + zero_padding
+    num = cbrt(bytes_to_int(block))
+    return int_to_bytes(num)
 
 
 msg = b'hi mom'
@@ -64,6 +69,8 @@ pub, pri = RSA.generate_keys(1024, 3)
 real_signature = generate_signature(msg, pri)
 
 print(verify_signature(real_signature, msg, pub))
+print(verify_signature(fake_signature(msg, pub[1]), msg, pub))
+
 '''
 Bleichenbacher's e=3 RSA Attack
 Crypto-tourism informational placard.
