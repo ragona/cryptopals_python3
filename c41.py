@@ -1,5 +1,5 @@
 from Crypto.Util.number import inverse
-from pals.RSA import RSA, bytes_from_int, bytes_to_int
+from pals.RSA import RSA, int_to_bytes, bytes_to_int
 import json, time, hashlib
 
 public, private = RSA.generate_keys()
@@ -36,7 +36,7 @@ def unpadded_recovery_oracle(pub_key, C):
     nP = decypher_blob(nC)
     #reverse it 
     P = (bytes_to_int(nP) // S) % N
-    return bytes_from_int(P)
+    return int_to_bytes(P)
 
 #this happens somewhere else 
 blob = generate_blob('555-55-5555')
