@@ -18,13 +18,16 @@ g = int(('5958c9d3898b224b12672c0b98e06c60df923cb8bc999d119'
          '878480e99041be601a62166ca6894bdd41a7054ec89f756ba'
          '9fc95302291') , 16)
 
+def H(message):
+  return int.from_bytes(sha1(message).digest(), 'big') 
+
 def per_user_keys():
   x = random.randint(1, 2<<64) #how big should this number be? 
   y = pow(g, x, p)
   return (y, x) #public / private -- should be packaged with p,q,g)
 
 def sign(message, x):
-  h = int.from_bytes(sha1(message).digest(), 'big')
+  h = H(message)
   r = 0
   #if r is 0 we need to generate a new k
   while r == 0:
@@ -39,7 +42,7 @@ def sign(message, x):
 
 def verify(message, signature, y):
   r, s = signature
-  h = int.from_bytes(sha1(message).digest(), 'big')
+  h = H(message)
   w = inverse(s, q)
   u1 = h * w % q 
   u2 = r * w % q
