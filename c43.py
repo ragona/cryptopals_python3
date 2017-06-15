@@ -1,10 +1,17 @@
 from pals.DSA import DSA, H
+from Crypto.Util.number import inverse
 
+def x_from_nonce(msg, signature, public, k):
+    p,q,g,y = public
+    r,s = signature
+    h = H(msg)
+    x = (inverse(r, q) * (s * k - h)) % q
+    return x
+
+msg = b'foo'
 pub, pri = DSA.generate_user_key_pair()
-signature = DSA.sign(b'foo', pri)
-valid = DSA.verify(b'foo', signature, pub)
-
-print(valid)
+signature = DSA.sign(msg, pri)
+valid = DSA.verify(msg, signature, pub)
 
 '''
 DSA key recovery from nonce
