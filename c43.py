@@ -37,41 +37,20 @@ def sign(message, x):
     return sign(message)
   return (r, s)
 
+def verify(message, signature, y):
+  r, s = signature
+  h = int.from_bytes(sha1(message).digest(), 'big')
+  w = inverse(s, q)
+  u1 = h * w % q 
+  u2 = r * w % q
+  v = (pow(g, u1, p) * pow(y, u2, p) % p) % q
+  return v == r
+
 pub, pri = per_user_keys()
-print(sign(b'foo', pri))
+signature = sign(b'foo', pri)
+valid = verify(b'foo', signature, pub)
 
-
-
-
-'''
-The first part of the DSA algorithm is the public key and private key generation, which can be described as:
-
-Choose a prime number q, which is called the prime divisor.
-Choose another primer number p, such that p-1 mod q = 0. p is called the prime modulus.
-Choose an integer g, such that 1 < g < p, g**q mod p = 1 and g = h**((p–1)/q) mod p. q is also called g's multiplicative order modulo p.
-Choose an integer, such that 0 < x < q.
-Compute y as g**x mod p.
-Package the public key as {p,q,g,y}.
-Package the private key as {p,q,g,x}.
-The second part of the DSA algorithm is the signature generation and signature verification, which can be described as:
-
-To generate a message signature, the sender can follow these steps:
-
-Generate the message digest h, using a hash algorithm like SHA1.
-Generate a random number k, such that 0 < k < q.
-Compute r as (g**k mod p) mod q. If r = 0, select a different k.
-Compute i, such that k*i mod q = 1. i is called the modular multiplicative inverse of k modulo q.
-Compute s = i*(h+r*x) mod q. If s = 0, select a different k.
-Package the digital signature as {r,s}.
-To verify a message signature, the receiver of the message and the digital signature can follow these steps:
-
-Generate the message digest h, using the same hash algorithm.
-Compute w, such that s*w mod q = 1. w is called the modular multiplicative inverse of s modulo q.
-Compute u1 = h*w mod q.
-Compute u2 = r*w mod q.
-Compute v = (((g**u1)*(y**u2)) mod p) mod q.
-If v == r, the digital signature is valid.
-'''
+print(valid)
 
 '''
 DSA key recovery from nonce
