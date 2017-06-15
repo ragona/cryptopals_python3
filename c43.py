@@ -13,19 +13,20 @@ def brute_force_nonce(msg, signature, public, endk):
     p,q,g,y = public
     for k in tqdm.tqdm(range(2, endk)):
         x = x_from_nonce(msg, signature, public, k)
-        if DSA.sign(msg, (p,q,g,x)) == signature:
-            print("got it", k)
+        if pow(g, x, p) == y:
             return (p,q,g,x)
     raise Exception("couldn't find nonce")
 
 
-
 msg = b'foo'
 pub, pri = DSA.generate_user_key_pair()
+#the real pair
 signature = DSA.sign(msg, pri)
 valid = DSA.verify(msg, signature, pub)
+#brute forced private key
+recovered = brute_force_nonce(msg, signature, pub, 1<<16)
 
-brute_force_nonce(msg, signature, pub, 1<<16)
+print(recovered == pri)
 
 '''
 DSA key recovery from nonce
