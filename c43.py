@@ -1,4 +1,6 @@
 import tqdm
+import binascii
+from hashlib import sha1
 from pals.DSA import DSA, H
 from Crypto.Util.number import inverse
 
@@ -22,11 +24,26 @@ msg = b'foo'
 pub, pri = DSA.generate_user_key_pair()
 #the real pair
 signature = DSA.sign(msg, pri)
-valid = DSA.verify(msg, signature, pub)
-#brute forced private key
-recovered = brute_force_nonce(msg, signature, pub, 1<<16)
 
-print(recovered == pri)
+y = int(('84ad4719d044495496a3201c8ff484feb45b962e7302e56a392aee4'
+         'abab3e4bdebf2955b4736012f21a08084056b19bcd7fee56048e004'
+         'e44984e2f411788efdc837a0d2e5abb7b555039fd243ac01f0fb2ed'
+         '1dec568280ce678e931868d23eb095fde9d3779191b8c0299d6e07b'
+         'bb283e6633451e535c45513b2d33c99ea17'), 16)
+
+msg = b'''For those that envy a MC it can be hazardous to your health
+So be friendly, a matter of life and death, just like a etch-a-sketch'''
+
+r = 548099063082341131477253921760299949438196259240
+s = 857042759984254168557880549501802188789837994940
+
+# valid = DSA.verify(msg, signature, pub)
+# #brute forced private key
+# recovered = brute_force_nonce(msg, signature, pub, 1<<16)
+
+# print(recovered == pri)
+
+
 
 '''
 DSA key recovery from nonce
