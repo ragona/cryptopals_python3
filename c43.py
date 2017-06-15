@@ -1,3 +1,4 @@
+import tqdm
 from pals.DSA import DSA, H
 from Crypto.Util.number import inverse
 
@@ -8,10 +9,23 @@ def x_from_nonce(msg, signature, public, k):
     x = (inverse(r, q) * (s * k - h)) % q
     return x
 
+def brute_force_nonce(msg, signature, public, endk):
+    p,q,g,y = public
+    for k in tqdm.tqdm(range(2, endk)):
+        x = x_from_nonce(msg, signature, public, k)
+        if DSA.sign(msg, (p,q,g,x)) == signature:
+            print("got it", k)
+            return (p,q,g,x)
+    raise Exception("couldn't find nonce")
+
+
+
 msg = b'foo'
 pub, pri = DSA.generate_user_key_pair()
 signature = DSA.sign(msg, pri)
 valid = DSA.verify(msg, signature, pub)
+
+brute_force_nonce(msg, signature, pub, 1<<16)
 
 '''
 DSA key recovery from nonce

@@ -23,23 +23,22 @@ def H(message):
 
 class DSA:
     def generate_user_key_pair():
-        x = random.randint(1, 2<<64) #how big should this number be? 
+        x = random.randint(2, 2<<64) #how big should this number be? 
         y = pow(g, x, p)
         return ((p,q,g,y), (p,q,g,x)) #public / private 
 
     def sign(message, private):
         p,q,g,x = private
         h = H(message)
-        r = 0
-        #if r is 0 we need to generate a new k
-        while r == 0:
-            k = random.randint(0, 2<<32)
+        while True:
+            k = random.randint(0, 1<<16)
             r = pow(g, k, p) % q
-        i = inverse(k, q)
-        s = i*(h+r*x) % q
-        if s == 0:
-            #we need to try again with a different k in this case
-            return sign(message)
+            if r == 0:
+                continue
+            i = inverse(k, q)
+            s = i*(h+r*x) % q
+            if s != 0:
+                break
         return (r, s)
 
     def verify(message, signature, public):
