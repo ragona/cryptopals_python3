@@ -4,26 +4,26 @@ from hashlib import sha1
 from pals.DSA import DSA, H
 from Crypto.Util.number import inverse
 
-def x_from_nonce(msg, signature, public, k):
+def x_from_nonce(msg, signature, public, k, h=None):
     p,q,g,y = public
     r,s = signature
-    h = H(msg)
+    if h is None: h = H(msg)
     x = (inverse(r, q) * (s * k - h)) % q
     return x
 
-def brute_force_nonce(msg, signature, public, endk):
+def brute_force_nonce(msg, signature, public, endk, h=None):
     p,q,g,y = public
     for k in tqdm.tqdm(range(2, endk)):
-        x = x_from_nonce(msg, signature, public, k)
+        x = x_from_nonce(msg, signature, public, k, h)
         if pow(g, x, p) == y:
             return (p,q,g,x)
     raise Exception("couldn't find nonce")
 
 
-msg = b'foo'
-pub, pri = DSA.generate_user_key_pair()
-#the real pair
-signature = DSA.sign(msg, pri)
+msg = b'''For those that envy a MC it can be hazardous to your health
+So be friendly, a matter of life and death, just like a etch-a-sketch'''
+
+p,q,g,y = DSA.generate_user_key_pair()[0]
 
 y = int(('84ad4719d044495496a3201c8ff484feb45b962e7302e56a392aee4'
          'abab3e4bdebf2955b4736012f21a08084056b19bcd7fee56048e004'
@@ -31,19 +31,21 @@ y = int(('84ad4719d044495496a3201c8ff484feb45b962e7302e56a392aee4'
          '1dec568280ce678e931868d23eb095fde9d3779191b8c0299d6e07b'
          'bb283e6633451e535c45513b2d33c99ea17'), 16)
 
-msg = b'''For those that envy a MC it can be hazardous to your health
-So be friendly, a matter of life and death, just like a etch-a-sketch'''
-
 r = 548099063082341131477253921760299949438196259240
 s = 857042759984254168557880549501802188789837994940
+h = int(0xd2d0714f014a9784047eaeccf956520045c45265)
 
-# valid = DSA.verify(msg, signature, pub)
-# #brute forced private key
-# recovered = brute_force_nonce(msg, signature, pub, 1<<16)
+#generate the parameters given below and test our brute force
+sig = (r, s)
+public = (p,q,g,y)
+recovered = brute_force_nonce(msg, sig, public, 1<<16, h) 
 
-# print(recovered == pri)
+#see if it worked
+fingerprint = "0954edd5e0afe5542a4adf012611a91912a3ec16"
+hex_private = hex(recovered[3])[2:].encode('ascii')
+hash_private = sha1(hex_private).hexdigest()
 
-
+print(hash_private == fingerprint)
 
 '''
 DSA key recovery from nonce
