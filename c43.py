@@ -1,5 +1,4 @@
 import tqdm
-import binascii
 from hashlib import sha1
 from pals.DSA import DSA, H
 from Crypto.Util.number import inverse
