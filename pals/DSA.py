@@ -31,7 +31,7 @@ class DSA:
         p,q,g,x = private
         h = H(message)
         while True:
-            k = random.randint(0, 1<<16)
+            k = random.randint(2, 1<<16) #vulnerable! this should be bigger
             r = pow(g, k, p) % q
             if r == 0:
                 continue
