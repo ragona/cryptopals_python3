@@ -34,18 +34,21 @@ r = 548099063082341131477253921760299949438196259240
 s = 857042759984254168557880549501802188789837994940
 h = int(0xd2d0714f014a9784047eaeccf956520045c45265)
 
-#generate the parameters given below and test our brute force
-sig = (r, s)
-public = (p,q,g,y)
-recovered = brute_force_nonce(msg, sig, public, 1<<16, h) 
+def main():
+    #generate the parameters given below and test our brute force
+    sig = (r, s)
+    public = (p,q,g,y)
+    recovered = brute_force_nonce(msg, sig, public, 1<<16, h) 
 
-#see if it worked
-fingerprint = "0954edd5e0afe5542a4adf012611a91912a3ec16"
-hex_private = hex(recovered[3])[2:].encode('ascii')
-hash_private = sha1(hex_private).hexdigest()
+    #see if it worked
+    fingerprint = "0954edd5e0afe5542a4adf012611a91912a3ec16"
+    hex_private = hex(recovered[3])[2:].encode('ascii')
+    hash_private = sha1(hex_private).hexdigest()
 
-print(hash_private == fingerprint)
+    print(hash_private == fingerprint)
 
+if __name__ == '__main__':
+    main()
 '''
 DSA key recovery from nonce
 Step 1: Relocate so that you are out of easy travel 
