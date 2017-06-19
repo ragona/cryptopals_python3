@@ -22,18 +22,21 @@ def H(message):
   return int.from_bytes(sha1(message).digest(), 'big') 
 
 class DSA:
-    def generate_user_key_pair():
+    def generate_user_key_pair(p=p,q=q,g=g):
         x = random.randint(2, 2<<64) #how big should this number be? 
         y = pow(g, x, p)
         return ((p,q,g,y), (p,q,g,x)) #public / private 
 
-    def sign(message, private):
+    def sign(message, private, extra_vulnerable=False):
         p,q,g,x = private
         h = H(message)
         while True:
             k = random.randint(2, 1<<16) #vulnerable! this should be bigger
             r = pow(g, k, p) % q
-            if r == 0:
+            if r == 0 and not extra_vulnerable:
+                #the DSA spec includes a note that you must retry
+                #if r is zero. If you don't include this you'll be
+                #vulnerable to parameter tampering (as shown in c45)
                 continue
             i = inverse(k, q)
             s = i*(h+r*x) % q
