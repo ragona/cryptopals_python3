@@ -1,6 +1,5 @@
 from Crypto.Util import number
 from os import urandom
-from binascii import hexlify, unhexlify
 from hashlib import sha1
 import re
 
