@@ -81,7 +81,7 @@ class RSA:
 
     def verify_signature(signature, message, public_key):
         s = b'\x00' + int_to_bytes(RSA.encrypt(signature, public_key))
-        r = re.compile(b'\x00\x01\xFF+?\x00(.{20})', re.DOTALL) 
+        r = re.compile(b'\x00\x01\xFF+?\x00(.{20})', re.DOTALL) #Vulnerable implementation
         g = re.match(r, s)
         if g is None:
             return False
