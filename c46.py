@@ -1,15 +1,16 @@
 from pals.RSA import RSA, bytes_to_int
 
-def oracle(private_key, ciphertext):
+def last_bit_oracle(private_key, ciphertext):
     i = bytes_to_int(RSA.decrypt(ciphertext, private_key))
-    print(bin(i))
+    return i >> (i.bit_length() - 1)
 
 msg = b'secret message'
 pub, pri = RSA.generate_keys()
 
 ciphertext = RSA.encrypt(msg, pub)
-oracle(pri, ciphertext)
+last_bit = last_bit_oracle(pri, ciphertext)
 
+print(last_bit)
 '''
 RSA parity oracle
 When does this ever happen?
