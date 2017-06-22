@@ -1,16 +1,26 @@
-from pals.RSA import RSA, bytes_to_int
 
-def last_bit_oracle(private_key, ciphertext):
-    i = bytes_to_int(RSA.decrypt(ciphertext, private_key))
-    return i >> (i.bit_length() - 1)
+from base64 import b64decode
+from pals.RSA import RSA
+from pals.utils import bytes_to_int, int_to_bytes
 
+def is_odd_oracle(private_key, ciphertext):
+    return bytes_to_int(RSA.decrypt(ciphertext, private_key)) & 1
+
+def parity_decrypt(ciphertext, pub):
+    c = bytes_to_int(ciphertext)
+    low = 0
+    high = n
+    e, n = pub
+    # for _ in range(n.bit_lenght()) 
+
+plain = b64decode(b'VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ')
 msg = b'secret message'
 pub, pri = RSA.generate_keys()
-
 ciphertext = RSA.encrypt(msg, pub)
-last_bit = last_bit_oracle(pri, ciphertext)
 
-print(last_bit)
+is_odd = is_odd_oracle(pri, ciphertext)
+
+print(is_odd)
 '''
 RSA parity oracle
 When does this ever happen?
