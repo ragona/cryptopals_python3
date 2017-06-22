@@ -1,4 +1,4 @@
-
+from math import log, ceil
 from base64 import b64decode
 from pals.RSA import RSA
 from pals.utils import bytes_to_int, int_to_bytes
@@ -6,18 +6,24 @@ from pals.utils import bytes_to_int, int_to_bytes
 def is_odd_oracle(private_key, ciphertext):
     return bytes_to_int(RSA.decrypt(ciphertext, private_key)) & 1
 
-def parity_decrypt(ciphertext, pub):
-    c = bytes_to_int(ciphertext)
+def parity_decrypt(c, pub):
     low = 0
     high = n
     e, n = pub
-    # for _ in range(n.bit_lenght()) 
+    mult = pow(2, e, n)
+    for _ in range(ceil(log(n, 2))): 
+        c = c * mult
+        if is_odd_oracle(int_to_bytes(c)):
+            low = (low + high) / 2
+        else:
+            high = (low + high) / 2
 
-plain = b64decode(b'VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ')
+
+plain = b64decode(b'VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ==')
 msg = b'secret message'
 pub, pri = RSA.generate_keys()
 ciphertext = RSA.encrypt(msg, pub)
-
+print(ciphertext)
 is_odd = is_odd_oracle(pri, ciphertext)
 
 print(is_odd)
