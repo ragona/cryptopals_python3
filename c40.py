@@ -18,8 +18,8 @@ quite get it again.
 '''
 
 from Crypto.Util.number import inverse
-from pals.RSA import RSA, int_to_bytes
-from pals.utils import cbrt
+from pals.RSA import RSA
+from pals.utils import cbrt, int_to_bytes
 
 msg = b'some other secret message'
 

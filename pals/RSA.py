@@ -1,13 +1,8 @@
 from Crypto.Util import number
 from os import urandom
 from hashlib import sha1
+from pals.utils import int_to_bytes, bytes_to_int
 import re
-
-def bytes_to_int(b):
-    return int.from_bytes(b, byteorder='big') 
-
-def int_to_bytes(i):
-    return i.to_bytes((i.bit_length() + 7) // 8, 'big')
 
 '''
 RFC 2313: https://tools.ietf.org/html/rfc2313

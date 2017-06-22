@@ -1,5 +1,6 @@
 from Crypto.Util.number import inverse
-from pals.RSA import RSA, int_to_bytes, bytes_to_int
+from pals.RSA import RSA
+from pals.utils import int_to_bytes, bytes_to_int
 import json, time, hashlib
 
 public, private = RSA.generate_keys()

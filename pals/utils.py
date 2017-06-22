@@ -331,3 +331,13 @@ def cbrt(n):
         else:
             hi = mid
     return lo
+
+#================
+# CONVERSION
+#================
+
+def bytes_to_int(b):
+    return int.from_bytes(b, byteorder='big') 
+
+def int_to_bytes(i):
+    return i.to_bytes((i.bit_length() + 7) // 8, 'big')

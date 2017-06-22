@@ -1,5 +1,5 @@
-from pals.RSA import RSA, bytes_to_int, int_to_bytes
-from pals.utils import cbrt
+from pals.RSA import RSA
+from pals.utils import cbrt, bytes_to_int, int_to_bytes
 from hashlib import sha1
 
 def fake_signature(message, key_size):
