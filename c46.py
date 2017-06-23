@@ -1,34 +1,47 @@
+'''
+this one is fucking bizarre. my brain hurts.
+'''
+
 from tqdm import tqdm
 from math import log, ceil
 from base64 import b64decode
 from pals.RSA import RSA
 from pals.utils import bytes_to_int, int_to_bytes
+from decimal import *
 
 def is_odd_oracle(private_key, ciphertext):
     return bytes_to_int(RSA.decrypt(bytes_to_int(ciphertext), private_key)) & 1
 
 def parity_decrypt(c, pub, pri):
-    low = 0
     e, n = pub
-    high = n
-    mult = pow(2, e, n)
-    for _ in tqdm(range(ceil(log(n, 2)))): 
-        c = c * mult
+    #decimal with 1024 precision is necessary or we 
+    #lose information to poor float precision during 
+    #the division below  
+    low = Decimal(0)
+    high = Decimal(n)
+    getcontext().prec = 1024
+    #the actual position in the range isn't important 
+    #since we're doing the binary search by repeatedly
+    #doubling c, decrypting, and testing for if it is odd. 
+    #tqdm just shows us a progress bar.
+    for _ in tqdm(range(1024)): 
+        c = c * pow(2, e, n)
         mid = (low + high) / 2
-        if is_odd_oracle(pri, int_to_bytes(c)):
+        is_odd = is_odd_oracle(pri, int_to_bytes(c))
+        if is_odd:
             low = mid
         else:
             high = mid
     return int_to_bytes(int(high))
 
 
-plain = b64decode(b'VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ==')
-msg = b'secret message'
-pub, pri = RSA.generate_keys()
-ciphertext = RSA.encrypt(msg, pub)
-recovered = parity_decrypt(ciphertext, pub, pri)
+if __name__ == '__main__':
+    plain = b64decode(b'VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ==')
+    pub, pri = RSA.generate_keys()
+    ciphertext = RSA.encrypt(plain, pub)
+    recovered = parity_decrypt(ciphertext, pub, pri)
 
-print(recovered)
+    print(recovered)
 '''
 RSA parity oracle
 When does this ever happen?
