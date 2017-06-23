@@ -1,32 +1,34 @@
+from tqdm import tqdm
 from math import log, ceil
 from base64 import b64decode
 from pals.RSA import RSA
 from pals.utils import bytes_to_int, int_to_bytes
 
 def is_odd_oracle(private_key, ciphertext):
-    return bytes_to_int(RSA.decrypt(ciphertext, private_key)) & 1
+    return bytes_to_int(RSA.decrypt(bytes_to_int(ciphertext), private_key)) & 1
 
-def parity_decrypt(c, pub):
+def parity_decrypt(c, pub, pri):
     low = 0
-    high = n
     e, n = pub
+    high = n
     mult = pow(2, e, n)
-    for _ in range(ceil(log(n, 2))): 
+    for _ in tqdm(range(ceil(log(n, 2)))): 
         c = c * mult
-        if is_odd_oracle(int_to_bytes(c)):
-            low = (low + high) / 2
+        mid = (low + high) / 2
+        if is_odd_oracle(pri, int_to_bytes(c)):
+            low = mid
         else:
-            high = (low + high) / 2
+            high = mid
+    return int_to_bytes(int(high))
 
 
 plain = b64decode(b'VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ==')
 msg = b'secret message'
 pub, pri = RSA.generate_keys()
 ciphertext = RSA.encrypt(msg, pub)
-print(ciphertext)
-is_odd = is_odd_oracle(pri, ciphertext)
+recovered = parity_decrypt(ciphertext, pub, pri)
 
-print(is_odd)
+print(recovered)
 '''
 RSA parity oracle
 When does this ever happen?
