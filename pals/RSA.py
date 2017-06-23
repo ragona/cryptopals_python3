@@ -1,4 +1,5 @@
 from Crypto.Util import number
+from Crypto import Random
 from os import urandom
 from hashlib import sha1
 from pals.utils import int_to_bytes, bytes_to_int
@@ -37,11 +38,19 @@ Version 1.5
    encryption block EB equal to k.
 
 '''
+#01
 def pkcs115_hash_pad(M, n):
         D = sha1(M).digest()
         k = n.bit_length() // 8
         BT = b'\x01' 
         PS = (k - 3 - len(D)) * b'\xFF' 
+        return b'\x00' + BT + PS + b'\x00' + D 
+
+def pkcs115_hash_pad_02(M, n):
+        D = sha1(M).digest()
+        k = n.bit_length() // 8
+        BT = b'\x01' 
+        PS = Random.new().read(k - 3 - len(D)) 
         return b'\x00' + BT + PS + b'\x00' + D 
 
 class RSA:
