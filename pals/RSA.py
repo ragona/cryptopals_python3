@@ -49,7 +49,7 @@ def pkcs115_hash_pad(M, n):
 def pkcs115_hash_pad_02(M, n):
         D = sha1(M).digest()
         k = n.bit_length() // 8
-        BT = b'\x01' 
+        BT = b'\x02' 
         PS = Random.new().read(k - 3 - len(D)) 
         return b'\x00' + BT + PS + b'\x00' + D 
 
