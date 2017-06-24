@@ -39,7 +39,7 @@ Version 1.5
 
 '''
 
-def pkcs115_hash_pad(M, n, block_type=1):
+def pkcs_115_pad(M, n, block_type=1):
         D = sha1(M).digest()
         k = n.bit_length() // 8
         if block_type == 1:
@@ -82,7 +82,7 @@ class RSA:
     a public key.
     '''
     def generate_signature(message, private_key):
-        block = pkcs115_hash_pad(message, private_key[1])
+        block = pkcs_115_pad(message, private_key[1])
         return RSA.decrypt(bytes_to_int(block), private_key)    
 
     '''
@@ -106,7 +106,7 @@ class RSA:
         #reverse the 'decrypt' done by generate_signature
         plain = b'\x00' + int_to_bytes(RSA.encrypt(signature, public_key))
         #pad user submitted message
-        test = pkcs115_hash_pad(message, public_key[1], block_type)
+        test = pkcs_115_pad(message, public_key[1], block_type)
         #verify 
         if plain != test:
             return False
