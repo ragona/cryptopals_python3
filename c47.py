@@ -1,14 +1,45 @@
-from pals.RSA import RSA
+from pals.RSA import RSA, pkcs_115_pad
 from pals.utils import bytes_to_int, int_to_bytes
 
+#==============
+# SERVER
+#==============
 
+class RSA_padding_oracle:
 
+    def __init__(self, private_key):
+        _, self.n = self.private_key = private_key
 
+    def oracle(self, ciphertext): 
+        plain = b'\x00' + RSA.decrypt(ciphertext, self.private_key)
+        return plain[:2] == b'\x00\x02' and len(plain) * 8 == self.n.bit_length()
+
+#==============
+# CLIENT
+#==============
+
+def bleichenbacher(c, oracle):
+    print(oracle(c))
+    #step 1.0: blinding
+    #step 2.0: search for pkcs conforming messages
+    #step 2.a: starting the search
+    #step 2.b: searching with more than one interval left
+    #step 2.c: searching with one interval left
+    #step 3.0: narrowing the set of solutions
+    #step 4.0: computing the solution 
+
+#==============
+# MAIN
+#==============
 
 def main(): 
-    pub, pri = RSA.generate_keys()
-    ciphertext = RSA.encrypt(plain, pub)
-    
+    pub, pri = RSA.generate_keys(256)
+    o = RSA_padding_oracle(pri)
+    m = pkcs_115_pad(b'kick it, CC', o.n, 2)
+    c = RSA.encrypt(m, pub)
+
+    bleichenbacher(c, o.oracle)
+
 if __name__ == '__main__':
     main()
 
