@@ -39,18 +39,15 @@ Version 1.5
 
 '''
 #01
-def pkcs115_hash_pad(M, n):
+def pkcs115_hash_pad(M, n, block_type=1):
         D = sha1(M).digest()
         k = n.bit_length() // 8
-        BT = b'\x01' 
-        PS = (k - 3 - len(D)) * b'\xFF' 
-        return b'\x00' + BT + PS + b'\x00' + D 
-
-def pkcs115_hash_pad_02(M, n):
-        D = sha1(M).digest()
-        k = n.bit_length() // 8
-        BT = b'\x02' 
-        PS = Random.new().read(k - 3 - len(D)) 
+        if block_type == 1:
+            BT = b'\x01' 
+            PS = (k - 3 - len(D)) * b'\xFF' 
+        elif block_type = 2:
+            BT = b'\x02' 
+            PS = Random.new().read(k - 3 - len(D)) 
         return b'\x00' + BT + PS + b'\x00' + D 
 
 class RSA:
