@@ -14,8 +14,8 @@ pub, pri = RSA.generate_keys(1024, 3)
 real_sig = RSA.generate_signature(msg, pri)
 fake_sig = fake_signature(msg, 1024)
 
-print(RSA.verify_signature(real_sig, msg, pub))
-print(RSA.verify_signature(fake_sig, msg, pub))
+print(RSA.verify_signature_vulnerable(real_sig, msg, pub))
+print(RSA.verify_signature_vulnerable(fake_sig, msg, pub))
 
 '''
 Bleichenbacher's e=3 RSA Attack
