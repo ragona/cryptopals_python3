@@ -42,12 +42,16 @@ Version 1.5
 def pkcs_115_pad(M, n, block_type=1):
         D = sha1(M).digest()
         k = n.bit_length() // 8
+        l = (k - 3 - len(D))
+        if block_type == 0:
+            BT = b'\x00' 
+            PS = (l) * b'\x00' 
         if block_type == 1:
             BT = b'\x01' 
-            PS = (k - 3 - len(D)) * b'\xFF' 
+            PS = (l) * b'\xFF' 
         elif block_type == 2:
             BT = b'\x02' 
-            PS = Random.new().read(k - 3 - len(D)) 
+            PS = Random.new().read(l) 
         return b'\x00' + BT + PS + b'\x00' + D 
 
 class RSA:
