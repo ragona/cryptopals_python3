@@ -1,3 +1,7 @@
+'''
+See /ref/bleichenbacher_padding.pdf for the whitepaper 
+'''
+
 from pals.RSA import RSA, pkcs_115_pad
 from pals.utils import bytes_to_int, int_to_bytes
 
@@ -8,7 +12,7 @@ from pals.utils import bytes_to_int, int_to_bytes
 class RSA_padding_oracle:
 
     def __init__(self, private_key):
-        _, self.n = self.private_key = private_key
+        self.e, self.n = self.private_key = private_key
 
     def oracle(self, ciphertext): 
         plain = b'\x00' + RSA.decrypt(ciphertext, self.private_key)
@@ -18,15 +22,63 @@ class RSA_padding_oracle:
 # CLIENT
 #==============
 
-def bleichenbacher(c, oracle):
-    print(oracle(c))
-    #step 1.0: blinding
-    #step 2.0: search for pkcs conforming messages
-    #step 2.a: starting the search
-    #step 2.b: searching with more than one interval left
-    #step 2.c: searching with one interval left
-    #step 3.0: narrowing the set of solutions
-    #step 4.0: computing the solution 
+def ceil(a, b):
+    return (a + b - 1) // b
+
+def bleichenbacher(c, public_key, oracle):
+    '''
+    setup
+    '''
+    e, n = public_key
+    k = n.bit_length() // 8
+    B = 2**(8*(k-2))
+    M = [(2*B, 3*B-1)]
+
+    print(M)
+    '''
+    step 1.0: blinding (why is it called blinding?)
+    oh I think it's called blinding because you're just blindly looking through 
+    numbers until you find one that is pkcs conforming. if you start with a known 
+    good 'c' then I think you can just set c_0 to the initial c that you pass in 
+    '''
+
+    c_0 = c
+
+    '''
+    step 2.0: search for pkcs conforming messages
+    I was initially planning to do this step by step, but I don't think the steps 
+    are actually totally linear. For example, after step 1 you will only have one
+    tuple in M. You'll go to 2.a, which will find the first pkcs conforming s, but
+    will not add anything to M, so you'll then hop down to step 2.c. Wait... when
+    the hell do you actually add anything to M? I don't understand when 2.b would
+    be triggered. 
+    '''
+
+    a, b = M[0]
+    while True:
+
+        '''
+        step 2.a: starting the search
+        we're finding the first s value here, beginning at n/3B. we use ceil because 
+        otherwise we have to do weird floating point math, and we don't want the floor 
+        of n//3B.
+        '''
+        i = 1
+        if i == 1:
+            s = ceil(n, B*3)
+            while True:
+                c = c_0 * (pow(s, e, n)) % n
+                if oracle(c):
+                    break
+                s += 1
+
+        print(s)
+        i+= 1
+        break
+        #step 2.b: searching with more than one interval left
+        #step 2.c: searching with one interval left
+        #step 3.0: narrowing the set of solutions
+        #step 4.0: computing the solution 
 
 #==============
 # MAIN
@@ -38,7 +90,7 @@ def main():
     m = pkcs_115_pad(b'kick it, CC', o.n, 2)
     c = RSA.encrypt(m, pub)
 
-    bleichenbacher(c, o.oracle)
+    bleichenbacher(c, pub, o.oracle)
 
 if __name__ == '__main__':
     main()
