@@ -1,5 +1,9 @@
 '''
 See /ref/bleichenbacher_padding.pdf for the whitepaper 
+
+Note: I didn't totally grok the distinction between the full whitepaper
+and the reduced problem that was suggested for c47, so I just implemented 
+the paper as is. We'll see if it actually works in c48 I suppose.
 '''
 
 from pals.RSA import RSA, pkcs_115_pad
@@ -30,9 +34,8 @@ def ceil(a, b):
 
 def bleichenbacher(c, public_key, oracle):
     '''
-    setup
+    setup common variables 
     '''
-
     e, n = public_key
     k = n.bit_length() // 8
     B = 2**(8*(k-2))
@@ -42,7 +45,9 @@ def bleichenbacher(c, public_key, oracle):
     step 1.0: blinding (why is it called blinding?)
     oh I think it's called blinding because you're just blindly looking through 
     numbers until you find one that is pkcs conforming. if you start with a known 
-    good 'c' then I think you can just set c_0 to the initial c that you pass in 
+    good 'c' then I think you can just set c_0 to the initial c that you pass in.
+    gonna skip this one for now, but what this means is that you can use an oracle
+    even without a captured ciphertext to start from! (I think?)
     '''
 
     c_0 = c
@@ -52,15 +57,13 @@ def bleichenbacher(c, public_key, oracle):
     while True:
         '''
         step 2.0: search for pkcs conforming messages
-        I was initially planning to do this step by step, but I don't think the steps 
-        are actually totally linear. For example, after step 1 you will only have one
-        tuple in M. You'll go to 2.a, which will find the first pkcs conforming s, but
-        will not add anything to M, so you'll then hop down to step 2.c. Wait... when
-        the hell do you actually add anything to M? I don't understand when 2.b would
-        be triggered. 
+        I was initially planning to do this step by step, but the steps are not linear. 
+        For example, after step 1 you will only have one tuple in M. You'll go to 2.a, 
+        which will find the first pkcs conforming s, but will not add anything to M, so 
+        you'll then hop down to step 2.c. When you get to step 3, you'll append at least 
+        one range to M, and may end up at step 2.b
         '''
         if i == 1:
-            print("starting 2.a")
             '''
             step 2.a: starting the search
             we're finding the first s value here, beginning at n/3B. we use ceil because 
@@ -71,18 +74,19 @@ def bleichenbacher(c, public_key, oracle):
             while True:
                 c = c_0 * (pow(s, e, n)) % n
                 if oracle(c):
-                    "finished 2.a"
                     break
                 s += 1
         elif i > 1 and len(M) >= 2:
-            print("starting 2.b")
             '''
             step 2.b: searching with more than one interval left
-            seriously I don't understand when the hell this step comes into play
+            same as the other steps, but 
             '''
-            print('oh hey you found step 2.b -- how did that happen?')
+            while True:
+                c = c_0 * (pow(s, e, n)) % n
+                if oracle(c):
+                    break
+                s += 1
         elif len(M) == 1:
-            print("starting 2.c")
             '''
             step 2.c: searching with one interval left
             '''
@@ -95,7 +99,6 @@ def bleichenbacher(c, public_key, oracle):
                 #try with the first r value we generated
                 c = c_0 * (pow(s, e, n)) % n
                 if oracle(c):
-                    "finished 2.c"
                     break
                 s += 1
 
@@ -105,21 +108,56 @@ def bleichenbacher(c, public_key, oracle):
                     r += 1
                     s = ceil(2*B + r*n, b)
 
+        '''
+        step 3.0: narrowing the set of solutions
+        '''
+        m = []
+        for a, b in M:
+            lower = ceil(a*s - 3*B+1, n)
+            upper = ceil(b*s - 2*B, n)
+
+            for r in range(lower, upper):
+                x = max(a, ceil(2*B + r*n, s))
+                y = min(b, (3*B - 1 + r*n) // s) #flooring here since we're looking for the min
+
+                #add to m
+                m.append((x, y))
+
+        #replace old M with narrowed m
+        M = m
+
+        '''
+        step 4.0: computing the solution 
+        if there's only one range left, check and see if a and b match. If so, we've narrowed
+        all the way until the two items match, and that means we've found the solution. Otherwise
+        increase i and try again. (The 'i' variable is sort of funny; it only matters if it's one
+        or not one, but it'll just keep incrementing for fun to make sure we don't hit step 2.a)
+        '''
+        if len(M) == 1:
+            a, b = M[0]
+            if a == b:
+                return a
+
         i += 1
-        #step 3.0: narrowing the set of solutions
-        #step 4.0: computing the solution 
 
 #==============
 # MAIN
 #==============
 
 def main(): 
+    #setup the environment
     pub, pri = RSA.generate_keys(256)
     o = RSA_padding_oracle(pri)
     m = pkcs_115_pad(b'kick it, CC', o.n, 2)
     c = RSA.encrypt(m, pub)
-
-    bleichenbacher(c, pub, o.oracle)
+    #do the attack
+    p = bleichenbacher(c, pub, o.oracle)
+    #convert to bytes
+    p = b'\x00' + int_to_bytes(p)
+    #make sure it matches what we encrypted
+    assert(p == m)
+    #celebrate with that sweet, sweet line to stdout
+    print('success')
 
 if __name__ == '__main__':
     main()
