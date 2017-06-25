@@ -22,6 +22,9 @@ class RSA_padding_oracle:
 # CLIENT
 #==============
 
+'''
+a // b, but it rounds up instead of down
+'''
 def ceil(a, b):
     return (a + b - 1) // b
 
@@ -29,12 +32,12 @@ def bleichenbacher(c, public_key, oracle):
     '''
     setup
     '''
+
     e, n = public_key
     k = n.bit_length() // 8
     B = 2**(8*(k-2))
     M = [(2*B, 3*B-1)]
 
-    print(M)
     '''
     step 1.0: blinding (why is it called blinding?)
     oh I think it's called blinding because you're just blindly looking through 
@@ -44,39 +47,65 @@ def bleichenbacher(c, public_key, oracle):
 
     c_0 = c
 
-    '''
-    step 2.0: search for pkcs conforming messages
-    I was initially planning to do this step by step, but I don't think the steps 
-    are actually totally linear. For example, after step 1 you will only have one
-    tuple in M. You'll go to 2.a, which will find the first pkcs conforming s, but
-    will not add anything to M, so you'll then hop down to step 2.c. Wait... when
-    the hell do you actually add anything to M? I don't understand when 2.b would
-    be triggered. 
-    '''
-
-    a, b = M[0]
+    #This while loop will do steps 2, 3, and 4
+    i = 1
     while True:
-
         '''
-        step 2.a: starting the search
-        we're finding the first s value here, beginning at n/3B. we use ceil because 
-        otherwise we have to do weird floating point math, and we don't want the floor 
-        of n//3B.
+        step 2.0: search for pkcs conforming messages
+        I was initially planning to do this step by step, but I don't think the steps 
+        are actually totally linear. For example, after step 1 you will only have one
+        tuple in M. You'll go to 2.a, which will find the first pkcs conforming s, but
+        will not add anything to M, so you'll then hop down to step 2.c. Wait... when
+        the hell do you actually add anything to M? I don't understand when 2.b would
+        be triggered. 
         '''
-        i = 1
         if i == 1:
+            print("starting 2.a")
+            '''
+            step 2.a: starting the search
+            we're finding the first s value here, beginning at n/3B. we use ceil because 
+            otherwise we have to do weird floating point math, and we don't want the floor 
+            of n//3B. 
+            '''
             s = ceil(n, B*3)
             while True:
                 c = c_0 * (pow(s, e, n)) % n
                 if oracle(c):
+                    "finished 2.a"
+                    break
+                s += 1
+        elif i > 1 and len(M) >= 2:
+            print("starting 2.b")
+            '''
+            step 2.b: searching with more than one interval left
+            seriously I don't understand when the hell this step comes into play
+            '''
+            print('oh hey you found step 2.b -- how did that happen?')
+        elif len(M) == 1:
+            print("starting 2.c")
+            '''
+            step 2.c: searching with one interval left
+            '''
+            a, b = M[0]
+            r = ceil(2*(b*s - 2*B), n)
+            s = ceil(2*B + r*n, b)
+
+            #look for a valid s 
+            while True:
+                #try with the first r value we generated
+                c = c_0 * (pow(s, e, n)) % n
+                if oracle(c):
+                    "finished 2.c"
                     break
                 s += 1
 
-        print(s)
-        i+= 1
-        break
-        #step 2.b: searching with more than one interval left
-        #step 2.c: searching with one interval left
+                #if we don't find anything and we've exceeded the r bound of 
+                #(3B + rn)/a, then, we increase r, redo s and keep trying 
+                if s > (3*b + r*n) // a:
+                    r += 1
+                    s = ceil(2*B + r*n, b)
+
+        i += 1
         #step 3.0: narrowing the set of solutions
         #step 4.0: computing the solution 
 
