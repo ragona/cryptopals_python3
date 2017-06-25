@@ -61,7 +61,8 @@ def bleichenbacher(c, public_key, oracle):
         For example, after step 1 you will only have one tuple in M. You'll go to 2.a, 
         which will find the first pkcs conforming s, but will not add anything to M, so 
         you'll then hop down to step 2.c. When you get to step 3, you'll append at least 
-        one range to M, and may end up at step 2.b
+        one range to M, and may end up at step 2.b. If you want to watch it bounce around 
+        just move the print statements out of the step headers. (It's useful!)
         '''
         if i == 1:
             '''
@@ -69,6 +70,7 @@ def bleichenbacher(c, public_key, oracle):
             we're finding the first s value here, beginning at n/3B. we use ceil because 
             otherwise we have to do weird floating point math, and we don't want the floor 
             of n//3B. 
+            print("2.a")
             '''
             s = ceil(n, B*3)
             while True:
@@ -79,7 +81,8 @@ def bleichenbacher(c, public_key, oracle):
         elif i > 1 and len(M) >= 2:
             '''
             step 2.b: searching with more than one interval left
-            same as the other steps, but 
+            same as the other steps, but starts at the previous s
+            print("2.b")
             '''
             while True:
                 c = c_0 * (pow(s, e, n)) % n
@@ -89,6 +92,7 @@ def bleichenbacher(c, public_key, oracle):
         elif len(M) == 1:
             '''
             step 2.c: searching with one interval left
+            print("2.c")
             '''
             a, b = M[0]
             r = ceil(2*(b*s - 2*B), n)
@@ -110,6 +114,7 @@ def bleichenbacher(c, public_key, oracle):
 
         '''
         step 3.0: narrowing the set of solutions
+        print("3.0")
         '''
         m = []
         for a, b in M:
@@ -132,6 +137,7 @@ def bleichenbacher(c, public_key, oracle):
         all the way until the two items match, and that means we've found the solution. Otherwise
         increase i and try again. (The 'i' variable is sort of funny; it only matters if it's one
         or not one, but it'll just keep incrementing for fun to make sure we don't hit step 2.a)
+        print("4.0")
         '''
         if len(M) == 1:
             a, b = M[0]
