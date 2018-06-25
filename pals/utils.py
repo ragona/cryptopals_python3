@@ -89,11 +89,25 @@ def aes_cbc_encrypt(data, key, iv):
     ciphertext = iv
     data = pad(data, 16)
     for i in range(0, len(data), block_size):
-        plaintext = data[i : i + block_size]
+        plaintext = data[i: i + block_size]
         xord = bytes([plaintext[i] ^ ciphertext[i] for i in range(block_size)]) 
         ciphertext = cipher.encrypt(xord)
         results += ciphertext
     return results
+
+
+# just returns the last block
+def aes_cbc_mac(data, key, iv):
+    cipher = AES.new(key, AES.MODE_ECB)
+    block_size = len(iv)
+    ciphertext = iv
+    data = pad(data, 16)
+    for i in range(0, len(data), block_size):
+        plaintext = data[i: i + block_size]
+        xord = bytes([plaintext[i] ^ ciphertext[i] for i in range(block_size)])
+        ciphertext = cipher.encrypt(xord)
+    return ciphertext
+
 
 def aes_cbc_decrypt(data, key, iv):
     return AES.new(key, AES.MODE_CBC, iv).decrypt(data)
