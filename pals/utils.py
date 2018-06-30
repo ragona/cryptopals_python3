@@ -268,6 +268,14 @@ def ecb_byte_aat(f):
 # RANDOM
 #================
 
+
+# just a pretty printer to align printed byte arrays
+def format_array(array):
+    return " ".join([
+        "{:3}".format(int(i)) for i in array
+    ])
+
+
 #Stole this from Wikipedia 
 def _int32(x):
     # Get the 32 least significant bits.

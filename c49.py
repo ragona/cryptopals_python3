@@ -1,7 +1,7 @@
 from pals import utils
 
 
-# constants
+# secret that exists on both client and server (but is apparently inaccessible to users)
 shared_key = b'YELLOW SUBMARINE'
 
 
@@ -14,31 +14,30 @@ def server_request(plaintext, client_mac, iv):
 
     # verify signature, then execute transaction(s)
     if mac == client_mac:
-        return "valid"
+        print(f'executing {plaintext}')
+        return True
     else:
-        return "invalid"
+        return False
 
 
 ##########
 # Client
 ##########
 def main():
-    # generate valid request
+    # generate "valid" request; imagining here that we can create arbitrary account names ('aaaaa') and also
+    # that the client will willingly generate a request for 1M spacebucks (but that the server would reject this).
     iv = b'AAAAAAAAAAAAAAAA'
-    request = b"from=alice&to=bob&amount=100"
+    request = b"from=aaaaa&to=eve&amount=1000000"
     mac = utils.aes_cbc_mac(request, shared_key, iv)
 
-    # intercept request
-    forged_request = request
-    forged_mac = mac
-    forged_iv = iv
+    # fake request from poor alice
+    forged_request = b'from=alice&to=eve&amount=1000000'
 
-    # mutate
+    # xor the original iv with the xor of the real and fake request to get the forged iv
+    forged_iv = utils.xor(iv, utils.xor(request[:16], forged_request[:16]))
 
     # validate with server
-    result = server_request(forged_request, forged_mac, forged_iv)
-
-    print(result)
+    server_request(forged_request, mac, forged_iv)
 
 
 if __name__ == '__main__':
