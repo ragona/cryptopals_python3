@@ -1,3 +1,49 @@
+from binascii import hexlify
+from pals import utils
+
+
+key = b'YELLOW SUBMARINE'
+iv = b'\x00' * 16
+
+
+def cbc_hash(s):
+    """
+    Hex encoded "hash" of CBC-MAC(s)
+    """
+    return hexlify(
+        utils.aes_cbc_mac(s, key, iv, no_pad=True)
+    )
+
+
+def length_extension_forgery(original, mac, extension):
+    """
+    Does the extension forgery in reverse; we start with the new payload ('extension'), then generate
+    a block that resets the state of the MAC so that when hashed in the future the result ends up being
+    the same as the original hash.
+    """
+    return extension + utils.xor(mac, original[:16]) + original[16:]
+
+
+def main():
+    """
+    We're imagining here that we can talk the server into doing this CBC-MAC hash to the 'bad' payload.
+    Once we have that, we can use that to create a block that will reset the state of the CBC process
+    when appended to the new payload.
+    """
+    # original message and mac
+    original = utils.pad(b"alert('MZA who was that?');\n", 16)
+
+    # the "extension" (we're actually gonna have this at the beginning of the message)
+    extension = b"alert('Ayo, the Wu is back!');//"  # '//' gets us to exactly 32 and also negates the reset block
+    ext_mac = utils.aes_cbc_mac(extension, key, iv, no_pad=True)
+    payload = length_extension_forgery(original, ext_mac, extension)
+
+    # make sure these match
+    assert cbc_hash(payload) == cbc_hash(original)
+
+
+if __name__ == '__main__':
+    main()
 
 '''
 Hashing with CBC-MAC
