@@ -1,5 +1,5 @@
 from pals import utils
-
+from os import urandom
 
 # secret that exists on both client and server (but is apparently inaccessible to users)
 shared_key = b'YELLOW SUBMARINE'
@@ -49,11 +49,12 @@ def length_extension_forgery():
     Oh, this is cool! You can reset the state of the CBC-MAC by including a block between two valid
     requests that is the MAC of the first (the last block) with the first block of the second. This
     effectively zeroes out the state and allows you to combine the two.
-    -----
-    Note: This only works because of the IV of zero; with a different IV there is additional work
-    required. (I assume additional xor'ing, but I haven't tried to get that working.)
+    ========
+    Note: I used a random IV here to prove that this can be done with a random IV as long as the attacker
+    knows what it is. It just adds some additional XOR'ing on the zero block; it now includes the IV as
+    well as Alice's MAC and Eve's first block.
     """
-    iv = b'\x00' * 16
+    iv = urandom(16)
 
     # this is the legitimate request we're stealing from alice
     alice_request = utils.pad(b'from=alice&tx_list=bob:100;sally:150', 16)
@@ -64,7 +65,7 @@ def length_extension_forgery():
     eve_mac = utils.aes_cbc_mac(eve_request, shared_key, iv, no_pad=True)
 
     # this block resets the state of the mac
-    zero_block = utils.xor(alice_mac, eve_request[:16])
+    zero_block = utils.xor(iv, utils.xor(alice_mac, eve_request[:16]))
 
     # include the zero block between the two requests
     forged_message = alice_request + zero_block + eve_request[16:]
