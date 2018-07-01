@@ -23,9 +23,13 @@ def server_request(plaintext, client_mac, iv):
 ##########
 # Client
 ##########
-def main():
+def chosen_iv_forgery():
+    """
+    This is the initial challenge where the client has control of the IV
+    """
     # generate "valid" request; imagining here that we can create arbitrary account names ('aaaaa') and also
-    # that the client will willingly generate a request for 1M spacebucks (but that the server would reject this).
+    # that the client will willingly generate a request for 1M spacebucks (but that the server would reject this
+    # or we'd stop it from actually going over the wire).
     iv = b'AAAAAAAAAAAAAAAA'
     request = b"from=aaaaa&to=eve&amount=1000000"
     mac = utils.aes_cbc_mac(request, shared_key, iv)
@@ -38,6 +42,30 @@ def main():
 
     # validate with server
     server_request(forged_request, mac, forged_iv)
+
+
+def length_extension_forgery():
+    """
+    We don't have control over the IV in this one, but we are allowed to submit multiple transactions.
+    We're gonna use the MAC from one message as the IV for a length extension attack. Let's imagine
+    that we've captured this message from Alice, where she is trying to give some money to people who
+    are not Eve.
+    """
+    iv = b'0' * 16
+    request = b'from=alice&tx_list=bob:100;sally:150;joes:20000'
+    mac = utils.aes_cbc_mac(request, shared_key, iv)
+    extension = b';eve:1000000'
+
+    # fake request by using mac as starting position
+    forged_mac = utils.aes_cbc_mac(extension, shared_key, mac)
+
+    # note that we need to include the original padding bytes from the first mac
+    server_request(request + b'\x01' + extension, forged_mac, iv)
+
+
+def main():
+    chosen_iv_forgery()
+    length_extension_forgery()
 
 
 if __name__ == '__main__':
