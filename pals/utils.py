@@ -107,6 +107,7 @@ def aes_cbc_mac(data, key, iv, no_pad=False):
         plaintext = data[i: i + block_size]
         xord = bytes([plaintext[i] ^ ciphertext[i] for i in range(block_size)])
         ciphertext = cipher.encrypt(xord)
+
     return ciphertext
 
 

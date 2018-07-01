@@ -10,7 +10,7 @@ shared_key = b'YELLOW SUBMARINE'
 ##########
 def server_request(plaintext, client_mac, iv):
     # generate server-side mac
-    mac = utils.aes_cbc_mac(plaintext, shared_key, iv)
+    mac = utils.aes_cbc_mac(plaintext, shared_key, iv, no_pad=True)
 
     # verify signature, then execute transaction(s)
     if mac == client_mac:
@@ -30,12 +30,12 @@ def chosen_iv_forgery():
     # generate "valid" request; imagining here that we can create arbitrary account names ('aaaaa') and also
     # that the client will willingly generate a request for 1M spacebucks (but that the server would reject this
     # or we'd stop it from actually going over the wire).
-    iv = b'AAAAAAAAAAAAAAAA'
-    request = b"from=aaaaa&to=eve&amount=1000000"
-    mac = utils.aes_cbc_mac(request, shared_key, iv)
+    iv = b'\x00' * 16
+    request = utils.pad(b"from=aaaaa&to=eve&amount=1000000", 16)
+    mac = utils.aes_cbc_mac(request, shared_key, iv, no_pad=True)
 
     # fake request from poor alice
-    forged_request = b'from=alice&to=eve&amount=1000000'
+    forged_request = utils.pad(b'from=alice&to=eve&amount=1000000', 16)
 
     # xor the original iv with the xor of the real and fake request to get the forged iv
     forged_iv = utils.xor(iv, utils.xor(request[:16], forged_request[:16]))
@@ -46,22 +46,31 @@ def chosen_iv_forgery():
 
 def length_extension_forgery():
     """
-    We don't have control over the IV in this one, but we are allowed to submit multiple transactions.
-    We're gonna use the MAC from one message as the IV for a length extension attack. Let's imagine
-    that we've captured this message from Alice, where she is trying to give some money to people who
-    are not Eve.
+    Oh, this is cool! You can reset the state of the CBC-MAC by including a block between two valid
+    requests that is the MAC of the first (the last block) with the first block of the second. This
+    effectively zeroes out the state and allows you to combine the two.
+    -----
+    Note: This only works because of the IV of zero; with a different IV there is additional work
+    required. (I assume additional xor'ing, but I haven't tried to get that working.)
     """
-    iv = b'0' * 16
-    request = b'from=alice&tx_list=bob:100;sally:150;joes:20000'
-    mac = utils.aes_cbc_mac(request, shared_key, iv)
-    extension = b';eve:1000000'
+    iv = b'\x00' * 16
 
-    # fake request by using mac as starting position
-    # todo: I'm not sure this was the intended solution. Maybe we should be mangling the request instead?
-    forged_mac = utils.aes_cbc_mac(extension, shared_key, mac)
+    # this is the legitimate request we're stealing from alice
+    alice_request = utils.pad(b'from=alice&tx_list=bob:100;sally:150', 16)
+    alice_mac = utils.aes_cbc_mac(alice_request, shared_key, iv, no_pad=True)
 
-    # note that we need to include the original padding bytes from the first mac
-    server_request(request + b'\x01' + extension, forged_mac, iv)
+    # this is a request that eve is generating with an account she controls
+    eve_request = utils.pad(b'from=eve&tx_list=eve:10000;eve:10000', 16)
+    eve_mac = utils.aes_cbc_mac(eve_request, shared_key, iv, no_pad=True)
+
+    # this block resets the state of the mac
+    zero_block = utils.xor(alice_mac, eve_request[:16])
+
+    # include the zero block between the two requests
+    forged_message = alice_request + zero_block + eve_request[16:]
+
+    # send to the server
+    server_request(forged_message, eve_mac, iv)
 
 
 def main():
