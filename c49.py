@@ -57,6 +57,7 @@ def length_extension_forgery():
     extension = b';eve:1000000'
 
     # fake request by using mac as starting position
+    # todo: I'm not sure this was the intended solution. Maybe we should be mangling the request instead?
     forged_mac = utils.aes_cbc_mac(extension, shared_key, mac)
 
     # note that we need to include the original padding bytes from the first mac
