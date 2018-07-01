@@ -41,7 +41,7 @@ def chosen_iv_forgery():
     forged_iv = utils.xor(iv, utils.xor(request[:16], forged_request[:16]))
 
     # validate with server
-    server_request(forged_request, mac, forged_iv)
+    assert server_request(forged_request, mac, forged_iv)
 
 
 def length_extension_forgery():
@@ -71,7 +71,7 @@ def length_extension_forgery():
     forged_message = alice_request + zero_block + eve_request[16:]
 
     # send to the server
-    server_request(forged_message, eve_mac, iv)
+    assert server_request(forged_message, eve_mac, iv)
 
 
 def main():
