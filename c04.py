@@ -12,17 +12,17 @@ Find it.
 # if that decryption is more english than the best thing we've seen, declare it the frontrunner
 # print the best decryption we've seen
 
-import binascii
-from pals import utils
+from binascii import unhexlify
+from pals.freq_analysis import most_english_definition
 
 with open("files/c4.txt", "rb") as f:
     data = f.read()
     lines = data.split(b'\n')
-    best = ""
-    bestScore = 0
+    most_english = ""
+    best_score = 0
     for line in lines:
-        lineResult = utils.getMostEnglishDecryption(binascii.unhexlify(line))
-        if lineResult[0] > bestScore:
-            bestScore = lineResult[0]
-            best = lineResult[1]
-    print(best)
+        line_result = most_english_definition(unhexlify(line))
+        if line_result[0] > best_score:
+            best_score = line_result[0]
+            most_english = line_result[1]
+    print(most_english)

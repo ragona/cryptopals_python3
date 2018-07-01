@@ -1,6 +1,3 @@
-from binascii import unhexlify
-
-
 # https://en.wikipedia.org/wiki/Letter_frequency
 english_frequency = {" ": 13, "a": 8.16, "b": 1.49, "c": 2.78, "d": 4.25, "e": 12.70, "f": 2.22, "g": 2.01, "h": 6.09,
                      "i": 6.96, "j": 0.15, "k": 0.77, "l": 4.02, "m": 2.40, "n": 6.74, "o": 7.50, "p": 1.92, "q": 0.09,
@@ -35,26 +32,3 @@ def most_english_definition(s):
             highest_score = score
             most_english = result
     return highest_score, most_english
-
-
-def main():
-    s = unhexlify(b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
-    result = most_english_definition(s)
-
-    assert result[1] == "Cooking MC's like a pound of bacon"
-
-
-if __name__ == '__main__':
-    main()
-
-"""
-The hex encoded string:
-
-1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736
-... has been XOR'd against a single character. Find the key, decrypt the message.
-
-You can do this by hand. But don't: write code to do it for you.
-
-How? Devise some method for "scoring" a piece of English plaintext. Character frequency is a good metric. 
-Evaluate each output and choose the one with the best score.
-"""
