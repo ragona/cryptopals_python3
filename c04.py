@@ -14,9 +14,9 @@ def main():
                 unhexlify(line.strip())
             )
             # if this is the highest score, store it
-            if line_result[0] > best_score:
-                best_score = line_result[0]
-                most_english = line_result[1]
+            if line_result.score > best_score:
+                best_score = line_result.score
+                most_english = line_result.plaintext
 
         # output our best result
         print(most_english)

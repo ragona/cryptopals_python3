@@ -4,6 +4,13 @@ english_frequency = {" ": 13, "a": 8.16, "b": 1.49, "c": 2.78, "d": 4.25, "e": 1
                      "r": 5.98, "s": 6.32, "t": 9.05, "u": 2.75, "v": 0.97, "w": 2.36, "x": 0.15, "y": 1.97, "z": 0.07}
 
 
+class PlaintextGuess:
+    def __init__(self, plaintext, score, key):
+        self.plaintext = plaintext
+        self.score = score
+        self.key = key
+
+
 def single_character_xor(s, k):
     """
     XORs all characters in s against k
@@ -25,10 +32,12 @@ def most_english_definition(s):
     """
     most_english = ""
     highest_score = 0
+    key = None
     for i in range(255):
         result = single_character_xor(s, i)
         score = english_frequency_score(result)
         if score > highest_score:
             highest_score = score
             most_english = result
-    return highest_score, most_english
+            key = i
+    return PlaintextGuess(most_english, highest_score, key)
