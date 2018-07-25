@@ -22,7 +22,8 @@ class KeysizeGuesser:
             ) for keysize in range(2, self.max_keysize)
         ]
 
-        self.sorted_guesses = sorted(edit_distances, key=lambda x: x.edit_distance)
+        edit_distances.sort(key=lambda x: x.edit_distance)
+        self.sorted_guesses = edit_distances
 
 
 def main():
