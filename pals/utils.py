@@ -1,6 +1,6 @@
 from Crypto.Cipher import AES
 from Crypto import Random
-import itertools
+from itertools import combinations
 import struct 
 
 #=====================
@@ -128,13 +128,17 @@ def ctr(data, key, nonce):
 # DETECTION
 #================
 
-#if any N bytes are the same it's probably ecb 
-#with repeating data
-def detect_ecb(data, size=16):
-    blocks = [data[i:i+size] for i in range(0, len(data), size)]
-    combos = itertools.combinations(blocks, 2)
-    score = sum([c[0] == c[1] for c in combos])
-    return score > 0 
+
+def detect_ecb(ciphertext):
+    # split ciphertext into 16 byte blocks
+    blocks = [ciphertext[i:i + 16] for i in range(0, len(ciphertext), 16)]
+    # find all the pair combinations of the blocks
+    combos = combinations(blocks, 2)
+    # if any of the pairs are identical we suspect ecb
+    for combo in combos:
+        if combo[0] == combo[1]:
+            return True
+    return False
 
 #================
 # PADDING
