@@ -1,25 +1,35 @@
-import binascii
 import random
 from Crypto import Random
-from pals import utils
+from pals.ciphers import aes_cbc_encrypt, aes_ecb_encrypt
+from pals.utils import detect_ecb
+
 
 def encryption_oracle(data):
     key = Random.get_random_bytes(16)
-    randbytes = lambda: Random.get_random_bytes(random.randrange(5, 10))
     data = randbytes() + data + randbytes()
-    ciphertext = bytes()
-    if random.getrandbits(1):
-        print('ecb')
-        ciphertext = utils.aes_ecb_encrypt(data, key)
+    use_ecb = random.getrandbits(1)
+    if use_ecb:
+        ciphertext = aes_ecb_encrypt(data, key)
     else:
-        print('cbc')
-        ciphertext = utils.aes_cbc_encrypt(data, key, b'0' * 16)
-    return ciphertext
+        ciphertext = aes_cbc_encrypt(data, key, b'0' * 16)
 
-#works as long as we know there is repeating input
-a = encryption_oracle(b"a" * 50)
-is_ecb = utils.detect_ecb(a, 16)
-print(is_ecb)
+    # we return whether we used ecb so we can error if we got it wrong
+    return ciphertext, use_ecb
+
+
+def randbytes():
+    return Random.get_random_bytes(random.randrange(5, 10))
+
+
+def main():
+    ciphertext, is_ecb = encryption_oracle(b"a" * 50)
+    ecb_detected = detect_ecb(ciphertext)
+    if ecb_detected != is_ecb:
+        raise Exception("ECB detection failed")
+
+
+if __name__ == '__main__':
+    main()
 
 '''
 An ECB/CBC detection oracle
