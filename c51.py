@@ -1,5 +1,6 @@
 import zlib
 import os
+from math import inf
 from pals.ciphers import aes_cbc_encrypt
 from salsa20 import Salsa20_xor
 
@@ -9,6 +10,10 @@ def oracle(post):
 
 
 def encrypt(data):
+    return stream_encrypt(data)
+
+
+def stream_encrypt(data):
     key = os.urandom(32)
     iv = os.urandom(8)
     return Salsa20_xor(data, iv, key)
@@ -37,11 +42,21 @@ def format_request(post):
 
 
 def main():
-    a = "sessionid=T"
-    b = "sessionid=S"
+    guessed_plaintext = "session_id="
+    target_length = 44
 
-    print(oracle(a))
-    print(oracle(b))
+    for _ in range(target_length):
+        best_guess = None
+        shortest_len = inf
+        for i in range(255):
+            guess = guessed_plaintext + chr(i)
+            compressed_len = oracle(guess)
+            if compressed_len < shortest_len:
+                shortest_len = compressed_len
+                best_guess = guess
+        guessed_plaintext = best_guess
+
+    print(guessed_plaintext)
 
 
 if __name__ == '__main__':
