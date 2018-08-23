@@ -1,8 +1,8 @@
 import zlib
 import os
 import string
+import itertools
 import random
-from math import inf
 from pals.ciphers import aes_cbc_encrypt
 from salsa20 import Salsa20_xor
 
@@ -35,6 +35,12 @@ def compress(data):
 
 
 def format_request(post):
+    """
+    'google.com' instead of 'hapless.com' compresses differently and makes this way harder. This means that the naive
+    single character at a time approach will fail part of the way through recovering the session ID, so you need to
+    bust up the compression byte boundary with a two byte guess approach. This is of course way more expensive, but
+    it's a fun additional challenge.
+    """
     return bytes((
         "POST / HTTP / 1.1\n"
         "Host: google.com\n"
@@ -46,50 +52,60 @@ def format_request(post):
 
 def main():
     """
-    This works but it is NOT very resilient. It seems to only work in this narrow case.
-    Fixing it next. The bit that deals with CBC padding appears to be fine; the part
-    that isn't working is when the correct guess does not land on a byte boundary. I'm
-    not really sure what to do to fix that. I tried guessing two bytes at a time and it
-    didn't really help.
+    todo: Add writeup. WAIT. This shit isn't actually bombproof against different combos yet. Nooooo.
     """
 
     known_plaintext = "session_id="
     base64charset = string.ascii_letters + string.digits + "/+=\n"
-
-    # padding to make CBC play nice -- we're trying to pad out so that the correct guess is one block smaller
-    pad_length = 0
-    starting_length = oracle(known_plaintext)
-    for j in range(16):
-        shimmed_length = oracle(known_plaintext + "*" * j)
-        if shimmed_length != starting_length:
-            pad_length = j - 1
-            break
-
-    # pad with some value we won't see in a b64 string
-    pad = "*" * pad_length
-
-    def guess_character(known):
-        best_guess = None
-        # make one bad guess; we need to beat this or it indicates we're stuck
-        shortest_len = oracle(known + "#" + pad)
-        for c in base64charset:
-            compressed_len = oracle(known + c + pad)
-            if compressed_len < shortest_len:
-                shortest_len = compressed_len
-                best_guess = c
-        return best_guess
+    base64pairs = [''.join(pair) for pair in itertools.permutations(base64charset, 2)]
 
     # loop until we find the end of the line the session key is on
-    guess = None
-    while guess != '\n':
-        guess = guess_character(known_plaintext)
+    while '\n' not in known_plaintext:
+        # just guess single characters as our default
+        guess = guess_from_iterable(base64charset, known_plaintext)
         if guess is not None:
             known_plaintext += guess
         else:
-            print("stuck")
-            break
+            # alright that didn't work, start guessing pairs
+            pair_guess = guess_from_iterable(base64pairs, known_plaintext)
+            if pair_guess is None:
+                print("nooo")
+                break
+            else:
+                known_plaintext += pair_guess
 
     print(bytearray(known_plaintext, "utf-8"))
+
+
+def guess_from_iterable(iterable, known):
+    # make one bad guess to initialize; we need to beat this or it indicates we're stuck
+    bad_guess = ''.join(
+        random.choices('!@#$%^&*(){}[]', k=len(iterable[0]))
+    )
+    pad = find_padding(known, len(iterable[0]))
+    shortest_len = oracle(pad + known + bad_guess)
+    best_guess = None
+
+    for c in iterable:
+        compressed_len = oracle(pad + known + c)
+        if compressed_len < shortest_len:
+            shortest_len = compressed_len
+            best_guess = c
+    return best_guess
+
+
+def find_padding(known, iter_len=1):
+    # padding to make CBC play nice -- we're trying to pad out so that the correct guess is one block smaller
+    pad_length = 0
+    starting_length = oracle(known)
+    for j in range(16):
+        shimmed_length = oracle("*" * j + known)
+        if shimmed_length != starting_length:
+            pad_length = j - iter_len
+            break
+
+    # pad with some value we won't see in a b64 string
+    return "*" * pad_length
 
 
 if __name__ == '__main__':
