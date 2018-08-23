@@ -1,5 +1,6 @@
 import zlib
 import os
+import string
 from math import inf
 from pals.ciphers import aes_cbc_encrypt
 from salsa20 import Salsa20_xor
@@ -10,7 +11,8 @@ def oracle(post):
 
 
 def encrypt(data):
-    return stream_encrypt(data)
+    return cbc_encrypt(data)
+    # return stream_encrypt(data)
 
 
 def stream_encrypt(data):
@@ -42,21 +44,39 @@ def format_request(post):
 
 
 def main():
+    """
+    This works but it is NOT very resilient. It seems to only work in this narrow case.
+    Fixing it next. The bit that deals with CBC padding appears to be fine; the part
+    that isn't working is when the correct guess does not land on a byte boundary. I'm
+    not really sure what to do to fix that, but I'm gonna try twiddling with the padding
+    because that's all I can think of at the moment.
+    """
+
     guessed_plaintext = "session_id="
     target_length = 44
 
-    for _ in range(target_length):
+    for i in range(target_length):
+        pad_length = 0
+        starting_length = oracle(guessed_plaintext)
+        for j in range(16):
+            shimmed_length = oracle(guessed_plaintext + "*" * j)
+            if shimmed_length != starting_length:
+                pad_length = j - 1
+                break
+
+        pad = "*" * pad_length
         best_guess = None
         shortest_len = inf
-        for i in range(255):
-            guess = guessed_plaintext + chr(i)
-            compressed_len = oracle(guess)
+
+        for c in string.printable:
+            guess = guessed_plaintext + c
+            compressed_len = oracle(guess + pad)
             if compressed_len < shortest_len:
                 shortest_len = compressed_len
                 best_guess = guess
         guessed_plaintext = best_guess
 
-    print(guessed_plaintext)
+    print(bytearray(guessed_plaintext, "utf-8"))
 
 
 if __name__ == '__main__':
