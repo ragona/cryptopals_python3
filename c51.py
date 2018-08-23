@@ -1,6 +1,7 @@
 import zlib
 import os
 import string
+import random
 from math import inf
 from pals.ciphers import aes_cbc_encrypt
 from salsa20 import Salsa20_xor
@@ -36,7 +37,7 @@ def compress(data):
 def format_request(post):
     return bytes((
         "POST / HTTP / 1.1\n"
-        "Host: hapless.com\n"
+        "Host: google.com\n"
         "Cookie: sessionid=TmV2ZXIgcmV2ZWFsIHRoZSBXdS1UYW5nIFNlY3JldCE=\n"
         f"Content-Length: {len(post)}\n"
         f"{post}"
@@ -48,35 +49,47 @@ def main():
     This works but it is NOT very resilient. It seems to only work in this narrow case.
     Fixing it next. The bit that deals with CBC padding appears to be fine; the part
     that isn't working is when the correct guess does not land on a byte boundary. I'm
-    not really sure what to do to fix that, but I'm gonna try twiddling with the padding
-    because that's all I can think of at the moment.
+    not really sure what to do to fix that. I tried guessing two bytes at a time and it
+    didn't really help.
     """
 
-    guessed_plaintext = "session_id="
-    target_length = 44
+    known_plaintext = "session_id="
+    base64charset = string.ascii_letters + string.digits + "/+=\n"
 
-    for i in range(target_length):
-        pad_length = 0
-        starting_length = oracle(guessed_plaintext)
-        for j in range(16):
-            shimmed_length = oracle(guessed_plaintext + "*" * j)
-            if shimmed_length != starting_length:
-                pad_length = j - 1
-                break
+    # padding to make CBC play nice -- we're trying to pad out so that the correct guess is one block smaller
+    pad_length = 0
+    starting_length = oracle(known_plaintext)
+    for j in range(16):
+        shimmed_length = oracle(known_plaintext + "*" * j)
+        if shimmed_length != starting_length:
+            pad_length = j - 1
+            break
 
-        pad = "*" * pad_length
+    # pad with some value we won't see in a b64 string
+    pad = "*" * pad_length
+
+    def guess_character(known):
         best_guess = None
-        shortest_len = inf
-
-        for c in string.printable:
-            guess = guessed_plaintext + c
-            compressed_len = oracle(guess + pad)
+        # make one bad guess; we need to beat this or it indicates we're stuck
+        shortest_len = oracle(known + "#" + pad)
+        for c in base64charset:
+            compressed_len = oracle(known + c + pad)
             if compressed_len < shortest_len:
                 shortest_len = compressed_len
-                best_guess = guess
-        guessed_plaintext = best_guess
+                best_guess = c
+        return best_guess
 
-    print(bytearray(guessed_plaintext, "utf-8"))
+    # loop until we find the end of the line the session key is on
+    guess = None
+    while guess != '\n':
+        guess = guess_character(known_plaintext)
+        if guess is not None:
+            known_plaintext += guess
+        else:
+            print("stuck")
+            break
+
+    print(bytearray(known_plaintext, "utf-8"))
 
 
 if __name__ == '__main__':
