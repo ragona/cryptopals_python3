@@ -1,10 +1,9 @@
 import zlib
 import os
 import string
-import itertools
 import random
-from pals.ciphers import aes_cbc_encrypt
 from salsa20 import Salsa20_xor
+from pals.ciphers import aes_cbc_encrypt
 
 
 def oracle(post):
@@ -13,13 +12,6 @@ def oracle(post):
 
 def encrypt(data):
     return cbc_encrypt(data)
-    # return stream_encrypt(data)
-
-
-def stream_encrypt(data):
-    key = os.urandom(32)
-    iv = os.urandom(8)
-    return Salsa20_xor(data, iv, key)
 
 
 def cbc_encrypt(data):
@@ -30,17 +22,17 @@ def cbc_encrypt(data):
     )
 
 
+def stream_encrypt(data):
+    key = os.urandom(32)
+    iv = os.urandom(8)
+    return Salsa20_xor(data, iv, key)
+
+
 def compress(data):
     return zlib.compress(data)
 
 
 def format_request(post):
-    """
-    'google.com' instead of 'hapless.com' compresses differently and makes this way harder. This means that the naive
-    single character at a time approach will fail part of the way through recovering the session ID, so you need to
-    bust up the compression byte boundary with a two byte guess approach. This is of course way more expensive, but
-    it's a fun additional challenge.
-    """
     return bytes((
         "POST / HTTP / 1.1\n"
         "Host: google.com\n"
@@ -52,60 +44,108 @@ def format_request(post):
 
 def main():
     """
-    todo: Add writeup. WAIT. This shit isn't actually bombproof against different combos yet. Nooooo.
+    This was a fun one. It seems deceptively simple, but it turns out there are a LOT of corner cases
+    and ways for the effort to fail. I've solved a number of the common offenders that cause failures,
+    but just play around with the response body and I'm sure you can find one that pisses this thing off.
+    It's also very possible to just get a bad guess that leads the thing down an incorrect path, but if you
+    can identify you're stuck and just start over it often gets it on a subsequent run. I often see that it has
+    correctly found *A* string in the body (e.g. "sessionid=TmV2ZHost") which does compress better but is of course
+    not actually the session key. Found a lot of edge cases by just messing with the body; the base case actually
+    works really easily. (Even just changing "hapless" to "google" catches a byte boundary case.)
+
+    Things I struggled with:
+    - Guessing two bytes at a time didn't occur to me for a while to resolve byte boundary problems.
+    - Padding is hard to get right -- 'AAAAAA' of course compresses well which can give confusing results.
+      I suspect I still have some padding off by one problems in here.
+    - This shit is not deterministic. I think zlib includes the timestamp or some shit?
+    - If it guesses newline incorrectly the damned thing stops.
+    - Repeated elements inside session key have a good chance of breaking everything. wtf.
+
     """
-
     known_plaintext = "session_id="
-    base64charset = string.ascii_letters + string.digits + "/+=\n"
-    base64pairs = [''.join(pair) for pair in itertools.permutations(base64charset, 2)]
+    chars_to_guess = string.ascii_letters + string.digits + "/+=\n"  # guess from b64 chars plus newline
+    pairs_to_guess = pair_combos(chars_to_guess)
 
-    # loop until we find the end of the line the session key is on
     while '\n' not in known_plaintext:
-        # just guess single characters as our default
-        guess = guess_from_iterable(base64charset, known_plaintext)
+        guess = guess_from_iterable(iterable=chars_to_guess, known=known_plaintext)
         if guess is not None:
             known_plaintext += guess
         else:
-            # alright that didn't work, start guessing pairs
-            pair_guess = guess_from_iterable(base64pairs, known_plaintext)
-            if pair_guess is None:
-                print("nooo")
-                break
-            else:
+            # Try a two byte guess to resolve misaligned compression
+            pair_guess = guess_from_iterable(iterable=pairs_to_guess, known=known_plaintext)
+            if pair_guess is not None:
                 known_plaintext += pair_guess
+            else:
+                print(f"Restarting: failure at '{known_plaintext}'")
+                known_plaintext = "session_id="
 
-    print(bytearray(known_plaintext, "utf-8"))
+    print(bytes(known_plaintext, "utf-8"))
 
 
 def guess_from_iterable(iterable, known):
-    # make one bad guess to initialize; we need to beat this or it indicates we're stuck
-    bad_guess = ''.join(
-        random.choices('!@#$%^&*(){}[]', k=len(iterable[0]))
-    )
-    pad = find_padding(known, len(iterable[0]))
-    shortest_len = oracle(pad + known + bad_guess)
-    best_guess = None
+    """
+    This function uses the iterable provided to make guesses. It makes a bad guess, and then tries to beat that
+    guess. Returns the first good guess it finds. This occasionally finds the wrong string; there are things other
+    than the session key in the body, and sometimes it'll pick up on those.
+
+    Currently we only guess one or two byte sizes, but this also supports guessing more bytes at a time. (I tried this,
+    and it didn't resolve the case I was hoping it would resolve, so I don't know if that would ever have value.)
+    """
+    iterable_chunk_size = len(iterable[0])
+    pad = find_padding(known, iterable_chunk_size)
+
+    # baseline with a guess we know is wrong
+    bad_guess = random_nonb64_string(iterable_chunk_size)
+    incorrect_len = oracle(pad + known + bad_guess)
 
     for c in iterable:
         compressed_len = oracle(pad + known + c)
-        if compressed_len < shortest_len:
-            shortest_len = compressed_len
-            best_guess = c
-    return best_guess
+        if compressed_len < incorrect_len:
+            return c
+
+    return None
 
 
 def find_padding(known, iter_len=1):
-    # padding to make CBC play nice -- we're trying to pad out so that the correct guess is one block smaller
-    pad_length = 0
+    """
+    Generates random non-b64 strings and uses them to pad out and find the edge of the block.
+    ---
+    A randomly bad choice from random_nonb64_string seems like it could cause us to end up off-by-one with the
+    padding choice, which would ruin everything. Also, you sometimes need more that 16 bytes of padding. That
+    doesn't make sense to me, and I haven't dug into why. (Maybe it's the repeated char thing? Who knows.)
+    """
+    pad = None
     starting_length = oracle(known)
-    for j in range(16):
-        shimmed_length = oracle("*" * j + known)
-        if shimmed_length != starting_length:
-            pad_length = j - iter_len
+    for i in range(32):
+        test_pad = random_nonb64_string(i)
+        padded_length = oracle(known + test_pad)
+        if padded_length != starting_length:
+            pad = test_pad[:-iter_len]
             break
+    return pad
 
-    # pad with some value we won't see in a b64 string
-    return "*" * pad_length
+
+def random_nonb64_string(length):
+    """
+    I think this has a potential bug where the compressor gets clever and manages to compress a repeated element,
+    which could cause us to fail to find appropriate padding.
+    """
+    return ''.join(
+        random.choices('!@#$%^&*(){}[]', k=length)
+    )
+
+
+def pair_combos(iterable):
+    """
+    This just brute forces the list of all possible pair permutations. Why not just use this itertools.permutations?
+    Permutations doesn't include repeats -- you don't get 'aa', for example, so if you get a repeat in the session key
+    that also happens to be in an area that requires two byte guesses you'll never get it.
+    """
+    pairs = set()
+    for a in iterable:
+        for b in iterable:
+            pairs.add(a + b)
+    return list(pairs)
 
 
 if __name__ == '__main__':
