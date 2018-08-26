@@ -1,7 +1,9 @@
 from Crypto.Cipher import AES
 from Crypto import Random
+from functools import wraps
 from itertools import combinations
-import struct 
+from time import time
+import struct
 
 #=====================
 # XOR AND SCORING 
@@ -145,7 +147,7 @@ def detect_ecb(ciphertext):
 #================
 
 #pkcs7
-def pad(data, size):
+def pad(data, size=16):
     pad_size = size - len(data) % size
     return data + bytes([pad_size]) * pad_size
 
@@ -212,67 +214,19 @@ def get_block_size(f):
             return len(result) - len(start)
         i += 1
 
-#ecb byte at a time 
-#f should be a function that takes a byte string  
-#and returns an ecb encrypted byte string
-def ecb_byte_aat(f):
-    #get blocksize first
-    blocksize = get_block_size(f)    
-
-    #solve the prefix (if any)
-    #we need overall length and the length of the tail
-    #prefix_len will be multiple of blocksize, tail_len
-    #will be the number of bytes needed to pad the prefix
-    #so that we can send in our input below cleanly at the
-    #start of a block
-    def solve_prefix():
-        for i in range(blocksize):
-            pad = b'A' * (i + blocksize * 2)
-            blocks = get_blocks(f(pad), 16)
-            for j in range(len(blocks) - 1):
-                if blocks[j] == blocks[j + 1]:
-                    return(j * blocksize, i)
-        raise Exception("sorry pal")
-
-    prefix_len, tail_len = solve_prefix()
-
-    #we're gonna read the unknown portion by eating 
-    #into it one byte at a time by sending in known
-    #input plus sized padding such that we can  
-    #randomize the very last byte of input 
-    solved = b''
-    pre = b'A' * tail_len #number of bytes to pad out the prefix block
-    pad = b'A' * blocksize
-    while True:
-        #pad is the empty bytes at the front
-        pad = b'A' * ((blocksize - 1 - (len(solved) % blocksize)))
-        #overall size, must be will be a multiple of blocksize
-        #includes the one byte that we're randomizing, as well
-        #as the total length of the prefix bytes 
-        size = prefix_len + len(pad) + len(solved) + 1 
-        results = {}
-        #send (pre + pad + solved + char) into the box, store 
-        #the first 'size' bytes in our results dict keyed
-        #to the single byte that we used to get the result
-        for j in range(0,255):
-            test = f(pre + pad + solved + bytes([j])) 
-            results[test[0:size]] = bytes([j])
-        #send JUST the pad into the black box but test 
-        #the same number of bytes off the front of the
-        #result against the results table and see if 
-        #we have the a matching result in our dict 
-        pad_only = f(pre + pad)
-        chunk = pad_only[0:size]
-        if chunk in results:
-            solved += results[chunk]
-        else:
-            break
-
-    return solved
-
 #================
 # RANDOM
 #================
+
+
+def clock(func):
+    @wraps(func)
+    def clocked(*args, **kwargs):
+        start = time()
+        result = func(*args, **kwargs)
+        print(f"Ran '{func.__name__}' in: {time() - start}")
+        return result
+    return clocked
 
 
 # just a pretty printer to align printed byte arrays

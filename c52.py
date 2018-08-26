@@ -1,9 +1,12 @@
 import os
 from pals.ciphers import pad, aes_ecb_encrypt
+from pals.utils import clock
 
 
-def shitty_hash(M, H, C):
+def merkle_damgard(message, iv, cipher, size=16):
     """
+    Variably shitty hash function. Use small sizes for guaranteed easy collisions.
+    ------
     What's an iterated hash function? For all intents and purposes, we're talking about the Merkle-Damgard construction.
     It looks like this:
 
@@ -13,29 +16,57 @@ def shitty_hash(M, H, C):
       return H
     For message M, initial state H, and compression function C.
     """
-    for m in chunks(pad(M)):
-        H = C(m, H)
-    return H[:2]
+    for m in chunks(pad(message)):
+        iv = cipher(m, iv)
+    return iv[:size]
+
+
+def shitty_hash(message):
+    return merkle_damgard(
+        message=message,
+        iv=b'\x00' * 16,
+        cipher=aes_ecb_encrypt,
+        size=2
+    )
+
+
+def only_slightly_less_shitty_hash(message):
+    return merkle_damgard(
+        message=message,
+        iv=b'\x00' * 16,
+        cipher=aes_ecb_encrypt,
+        size=3
+    )
+
+
+@clock
+def find_collision(H):
+    random_bytes = (os.urandom(16) for _ in range(2**128))
+    while True:
+        m = next(random_bytes)
+        h = shitty_hash(m)
+        if h == H:
+            return m
+
+
+def gather_collisions(H, n):
+    collisions = []
+    for _ in range(2 ** n):
+        collisions.append(
+            find_collision(H)
+        )
+    return collisions
 
 
 def main():
-    iv = b"\x00" * 16
-    message = b"The major feature you want in your hash function is collision-resistance."
-    hash = shitty_hash(message, iv, aes_ecb_encrypt)
+    h = shitty_hash(
+        message=b"The major feature you want in your hash function is collision-resistance.",
+    )
 
-    def find_collision(m):
-        h = shitty_hash(m, iv, aes_ecb_encrypt)
-        if h == hash:
-            return m
-        return None
+    collisions = gather_collisions(h, 4)
 
-    rand_gen = (os.urandom(16) for _ in range(2**128))
-
-    while True:
-        result = find_collision(next(rand_gen))
-        if result is not None:
-            print(f"Found collision: '{result}'")
-            break
+    for collision in collisions:
+        print(collision)
 
 
 def chunks(M):
