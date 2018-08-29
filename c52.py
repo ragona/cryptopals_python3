@@ -3,6 +3,16 @@ from pals.ciphers import pad, aes_ecb_encrypt
 from pals.utils import clock
 
 
+DEFAULT_IV = b'\x00' * 16
+
+
+class Collision:
+    def __init__(self, a, b, collision):
+        self.a = a
+        self.b = b
+        self.hash_state = collision
+
+
 def merkle_damgard(message, iv, cipher, size=16):
     """
     Variably shitty hash function. Use small sizes for guaranteed easy collisions.
@@ -15,63 +25,116 @@ def merkle_damgard(message, iv, cipher, size=16):
         H := C(M[i], H)
       return H
     For message M, initial state H, and compression function C.
+    -------
+    M = message
+    H = iv
+    C = cipher
+    m = m[i]
+    -------
+    H[i] = f(H[i-1], m[i])
     """
+    if len(iv) < 16:
+        iv = pad(iv, 16)
+
     for m in chunks(pad(message)):
         iv = cipher(m, iv)
     return iv[:size]
 
 
-def shitty_hash(message):
+def shitty_hash(message, iv=DEFAULT_IV):
     return merkle_damgard(
         message=message,
-        iv=b'\x00' * 16,
+        iv=iv,
+        cipher=aes_ecb_encrypt,
+        size=1
+    )
+
+
+def only_slightly_less_shitty_hash(message, iv=DEFAULT_IV):
+    return merkle_damgard(
+        message=message,
+        iv=iv,
         cipher=aes_ecb_encrypt,
         size=2
     )
 
 
-def only_slightly_less_shitty_hash(message):
-    return merkle_damgard(
-        message=message,
-        iv=b'\x00' * 16,
-        cipher=aes_ecb_encrypt,
-        size=3
-    )
-
-
-@clock
+# @clock
 def find_collision(H):
-    random_bytes = (os.urandom(16) for _ in range(2**128))
+    """
+    Tries random bytes as inputs and finds collisions with H. Note: This function is "C" in the Joux description;
+    it returns two collisions for each call, at a cost of a single birthday attack. (approx. 2 * n / 2)
+    """
+    # pad H going in
+    H = pad(H, 16)
+
+    # just pick a random place to start, and use H as the IV
+    a = random_bytes()
+    aH = shitty_hash(a, H)
+
+    # look for another block that gets us the same result
     while True:
-        m = next(random_bytes)
-        h = shitty_hash(m)
-        if h == H:
-            return m
+        b = random_bytes()
+        bH = shitty_hash(b, H)
+        if aH == bH:
+            return Collision(a, b, aH)
 
 
 def gather_collisions(H, n):
+    """
+    From Joux multicollision paper:
+    - Let h0 be equal to the initial value IV of H.
+    - For i from 1 to t do:
+        * Call C and find B_i and B_prime_i such that f(h[i-1], B_i) = f(h[i-1], B_prime_i).
+        * Let h[i] = f(h[i-1], B[i])
+    - Pad and output the 2**t messages of the form (b_1,...,b_t,Padding) where b_i is one of the two blocks
+      B_i or B_prime_i.
+
+    Putting these two steps togethre, we obtain the following 4-collision:
+    f(f(IV, B0), B1) = f(f(IV, B0), B'1) = f(f(IV, B'0) = f(f(IV, B'0), B'1)
+    """
     collisions = []
-    for _ in range(2 ** n):
-        collisions.append(
-            find_collision(H)
-        )
+
+    # find a single initial collision
+    collision = find_collision(H)
+    collisions.append(collision)
+
+    # find a bunch more collisions, advancing the state each time
+    for _ in range(1, n):
+        collision = find_collision(collision.hash_state)
+        collisions.append(collision)
+
     return collisions
 
 
 def main():
-    h = shitty_hash(
-        message=b"The major feature you want in your hash function is collision-resistance.",
-    )
+    # the number of total collision pairs to find
+    t = 300
+    msg = b"The major feature you want in your hash function is collision-resistance."
 
-    collisions = gather_collisions(h, 4)
+    # the initial state that we want to collide with
+    h = shitty_hash(msg)
 
-    for collision in collisions:
-        print(collision)
+    # list of collisions on weak hash
+    collisions = gather_collisions(h, t)
+
+    # go through all these collisions and see if any of them collide with our more expensive hash
+    g = only_slightly_less_shitty_hash
+    for c in collisions:
+        a = g(c.a, c.hash_state)
+        b = g(c.b, c.hash_state)
+        if a == b:
+            print("found one")
+            break
 
 
 def chunks(M):
     for i in range(0, len(M), 16):
         yield M[i: i + 16]
+
+
+def random_bytes():
+    return os.urandom(16)
 
 
 if __name__ == '__main__':
