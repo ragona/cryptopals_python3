@@ -7,31 +7,18 @@ DEFAULT_IV = b'\x00' * 16
 
 
 class Collision:
-    def __init__(self, a, b, collision):
+    def __init__(self, a, b, initial_state):
         self.a = a
         self.b = b
-        self.hash_state = collision
+        self.initial_state = initial_state
+
+    def __str__(self):
+        return f"Collision({self.a}, {self.b}, {self.initial_state})"
 
 
 def merkle_damgard(message, iv, cipher, size=16):
     """
     Variably shitty hash function. Use small sizes for guaranteed easy collisions.
-    ------
-    What's an iterated hash function? For all intents and purposes, we're talking about the Merkle-Damgard construction.
-    It looks like this:
-
-    function MD(M, H, C):
-      for M[i] in pad(M):
-        H := C(M[i], H)
-      return H
-    For message M, initial state H, and compression function C.
-    -------
-    M = message
-    H = iv
-    C = cipher
-    m = m[i]
-    -------
-    H[i] = f(H[i-1], m[i])
     """
     if len(iv) < 16:
         iv = pad(iv, 16)
@@ -66,21 +53,21 @@ def find_collision(H):
     it returns two collisions for each call, at a cost of a single birthday attack. (approx. 2 * n / 2)
     """
     # pad H going in
-    H = pad(H, 16)
+    if len(H) < 16:
+        H = pad(H, 16)
 
     # just pick a random place to start, and use H as the IV
     a = random_bytes()
-    aH = shitty_hash(a, H)
+    h = shitty_hash(a, H)
 
     # look for another block that gets us the same result
     while True:
         b = random_bytes()
-        bH = shitty_hash(b, H)
-        if aH == bH:
-            return Collision(a, b, aH)
+        if shitty_hash(b, H) == h:
+            return Collision(a, b, H)
 
 
-def gather_collisions(H, n):
+def gather_collisions(H):
     """
     From Joux multicollision paper:
     - Let h0 be equal to the initial value IV of H.
@@ -93,38 +80,28 @@ def gather_collisions(H, n):
     Putting these two steps togethre, we obtain the following 4-collision:
     f(f(IV, B0), B1) = f(f(IV, B0), B'1) = f(f(IV, B'0) = f(f(IV, B'0), B'1)
     """
-    collisions = []
-
     # find a single initial collision
     collision = find_collision(H)
-    collisions.append(collision)
 
-    # find a bunch more collisions, advancing the state each time
-    for _ in range(1, n):
-        collision = find_collision(collision.hash_state)
-        collisions.append(collision)
-
-    return collisions
+    # find a bunch more collisions, advancing the state each time (why does advancing the state matter?)
+    while True:
+        collision = find_collision(collision.initial_state)
+        yield collision
 
 
 def main():
-    # the number of total collision pairs to find
-    t = 300
-    msg = b"The major feature you want in your hash function is collision-resistance."
-
     # the initial state that we want to collide with
-    h = shitty_hash(msg)
-
-    # list of collisions on weak hash
-    collisions = gather_collisions(h, t)
+    h = shitty_hash(b"The major feature you want in your hash function is collision-resistance.")
 
     # go through all these collisions and see if any of them collide with our more expensive hash
+    i = 0
     g = only_slightly_less_shitty_hash
-    for c in collisions:
-        a = g(c.a, c.hash_state)
-        b = g(c.b, c.hash_state)
+    for c in gather_collisions(h):
+        i += 1
+        a = g(c.a, h)
+        b = g(c.b, h)
         if a == b:
-            print("found one")
+            print(f"found collision after {i} iterations")
             break
 
 
