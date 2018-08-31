@@ -1,30 +1,34 @@
 import os
 from pals.ciphers import pad, aes_ecb_encrypt
-from pals.utils import clock
+from pals.utils import clock, do_cprofile
 
 
 DEFAULT_IV = b'\x00' * 16
 
 
 class Collision:
-    def __init__(self, a, b, initial_state):
+    def __init__(self, a, b, initial_state, resulting_hash):
         self.a = a
         self.b = b
         self.initial_state = initial_state
+        self.resulting_hash = resulting_hash
 
     def __str__(self):
         return f"Collision({self.a}, {self.b}, {self.initial_state})"
 
 
-def merkle_damgard(message, iv, cipher, size=16):
+def merkle_damgard(message, iv, size):
     """
     Variably shitty hash function. Use small sizes for guaranteed easy collisions.
     """
     if len(iv) < 16:
         iv = pad(iv, 16)
 
-    for m in chunks(pad(message)):
-        iv = cipher(m, iv)
+    if len(message) < 16:
+        message = pad(message)
+
+    for m in chunks(message):
+        iv = aes_ecb_encrypt(m, iv, nopad=True)
     return iv[:size]
 
 
@@ -32,8 +36,7 @@ def shitty_hash(message, iv=DEFAULT_IV):
     return merkle_damgard(
         message=message,
         iv=iv,
-        cipher=aes_ecb_encrypt,
-        size=1
+        size=2
     )
 
 
@@ -41,72 +44,63 @@ def only_slightly_less_shitty_hash(message, iv=DEFAULT_IV):
     return merkle_damgard(
         message=message,
         iv=iv,
-        cipher=aes_ecb_encrypt,
-        size=2
+        size=3
     )
 
 
-# @clock
+# @do_cprofile
+@clock
 def find_collision(H):
-    """
-    Tries random bytes as inputs and finds collisions with H. Note: This function is "C" in the Joux description;
-    it returns two collisions for each call, at a cost of a single birthday attack. (approx. 2 * n / 2)
-    """
-    # pad H going in
-    if len(H) < 16:
-        H = pad(H, 16)
 
-    # just pick a random place to start, and use H as the IV
-    a = random_bytes()
-    h = shitty_hash(a, H)
+    hashes = dict()
 
     # look for another block that gets us the same result
     while True:
-        b = random_bytes()
-        if shitty_hash(b, H) == h:
-            return Collision(a, b, H)
+
+        r = random_bytes()
+        h = shitty_hash(r, H)
+
+        if h in hashes and r != hashes[h]:
+
+            return Collision(
+                a=r,
+                b=hashes[h],
+                initial_state=H,
+                resulting_hash=h)
+
+        else:
+            hashes[h] = r
 
 
 def gather_collisions(H):
-    """
-    From Joux multicollision paper:
-    - Let h0 be equal to the initial value IV of H.
-    - For i from 1 to t do:
-        * Call C and find B_i and B_prime_i such that f(h[i-1], B_i) = f(h[i-1], B_prime_i).
-        * Let h[i] = f(h[i-1], B[i])
-    - Pad and output the 2**t messages of the form (b_1,...,b_t,Padding) where b_i is one of the two blocks
-      B_i or B_prime_i.
 
-    Putting these two steps togethre, we obtain the following 4-collision:
-    f(f(IV, B0), B1) = f(f(IV, B0), B'1) = f(f(IV, B'0) = f(f(IV, B'0), B'1)
-    """
     # find a single initial collision
     collision = find_collision(H)
 
     # find a bunch more collisions, advancing the state each time (why does advancing the state matter?)
     while True:
-        collision = find_collision(collision.initial_state)
+        collision = find_collision(collision.resulting_hash)
         yield collision
 
 
 def main():
-    # the initial state that we want to collide with
-    h = shitty_hash(b"The major feature you want in your hash function is collision-resistance.")
+    """
+    todo: Add writeup
+    """
 
-    # go through all these collisions and see if any of them collide with our more expensive hash
-    i = 0
-    g = only_slightly_less_shitty_hash
-    for c in gather_collisions(h):
-        i += 1
-        a = g(c.a, h)
-        b = g(c.b, h)
+    for c in gather_collisions(DEFAULT_IV):
+
+        a = only_slightly_less_shitty_hash(c.a, c.initial_state)
+        b = only_slightly_less_shitty_hash(c.b, c.initial_state)
+
         if a == b:
-            print(f"found collision after {i} iterations")
+            print("Found collision in stronger hash")
             break
 
 
 def chunks(M):
-    for i in range(0, len(M), 16):
+    msg_len = len(M)
+    for i in range(0, msg_len, 16):
         yield M[i: i + 16]
 
 

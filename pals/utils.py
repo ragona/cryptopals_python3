@@ -4,6 +4,7 @@ from functools import wraps
 from itertools import combinations
 from time import time
 import struct
+import cProfile
 
 #=====================
 # XOR AND SCORING 
@@ -220,13 +221,30 @@ def get_block_size(f):
 
 
 def clock(func):
+    i = 0
+
     @wraps(func)
     def clocked(*args, **kwargs):
+        nonlocal i
+        i += 1
         start = time()
         result = func(*args, **kwargs)
-        print(f"Ran '{func.__name__}' in: {time() - start}")
+        print(f"Ran '{func.__name__}' #{i} in: {time() - start}")
         return result
     return clocked
+
+
+def do_cprofile(func):
+    def profiled_func(*args, **kwargs):
+        profile = cProfile.Profile()
+        try:
+            profile.enable()
+            result = func(*args, **kwargs)
+            profile.disable()
+            return result
+        finally:
+            profile.print_stats(sort='cumtime')
+    return profiled_func
 
 
 # just a pretty printer to align printed byte arrays

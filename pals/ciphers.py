@@ -2,8 +2,9 @@ from Crypto.Cipher import AES
 from pals.utils import pad, unpad, xor
 
 
-def aes_ecb_encrypt(data, key):
-    data = pad(data, (len(data) // 16 + 1) * 16)
+def aes_ecb_encrypt(data, key, nopad=False):
+    if not nopad:
+        data = pad(data, (len(data) // 16 + 1) * 16)
     aes = AES.new(key, AES.MODE_ECB)
     return aes.encrypt(data)
 
