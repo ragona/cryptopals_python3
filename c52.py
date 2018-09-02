@@ -128,7 +128,7 @@ def main():
     assert f(f(DEFAULT_IV, b0.a), b1.a) \
         == f(f(DEFAULT_IV, b0.a), b1.b) \
         == f(f(DEFAULT_IV, b0.b), b1.a) \
-        == f(f(DEFAULT_IV, b0.a), b1.b)
+        == f(f(DEFAULT_IV, b0.b), b1.b)
 
     """
     Prove this out by building a more expensive (but not too expensive) hash function to pair with the one you just 
