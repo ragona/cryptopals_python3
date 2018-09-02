@@ -65,21 +65,21 @@ def colliding_pair(H, f):
     :param f: The hashing function to use
     """
 
-    hashes = dict()
+    hashes = dict()  # { hash: message }
 
     while True:
 
-        r = random_bytes()
-        h = f(message=r, iv=H)
+        m = os.urandom(16)
+        h = f(message=m, iv=H)
 
-        if h in hashes and r != hashes[h]:
+        if h in hashes and m != hashes[h]:
             return Collision(
-                a=r,
+                a=m,
                 b=hashes[h],
                 initial_state=H,
                 resulting_hash=h)
         else:
-            hashes[h] = r
+            hashes[h] = m
 
 
 def gather_collisions(H, f):
@@ -150,10 +150,6 @@ def main():
         if a == b:
             print("Found collision in stronger hash")
             break
-
-
-def random_bytes():
-    return os.urandom(16)
 
 
 if __name__ == '__main__':
