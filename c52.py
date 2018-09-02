@@ -7,28 +7,40 @@ DEFAULT_IV = b'\x00' * 16
 
 
 class Collision:
+
     def __init__(self, a, b, initial_state, resulting_hash):
+        """
+        f(iv=initial_state, msg=a) == f(iv=initial_state, msg=b) == resulting_hash
+
+        :param a: Message
+        :param b: Message
+        :param initial_state: Initial IV
+        :param resulting_hash: The collision
+        """
         self.a = a
         self.b = b
         self.initial_state = initial_state
         self.resulting_hash = resulting_hash
 
     def __str__(self):
-        return f"Collision({self.a}, {self.b}, {self.initial_state})"
+        return f"Collision(hash={self.resulting_hash}, a={self.a}, b={self.b}, iv={self.initial_state})"
 
 
 def merkle_damgard(message, iv, size):
     """
-    Variably shitty hash function. Use small sizes for guaranteed easy collisions.
+    Variably shitty hash function. Use small sizes for easy collisions. 'iv' is equal to 'H' or the initial state
+    as described in the various papers on this topic.
     """
-    if len(iv) < 16:
+
+    if len(iv) % 16 != 0:
         iv = pad(iv, 16)
 
-    if len(message) < 16:
+    if len(message) % 16 != 0:
         message = pad(message)
 
     for m in chunks(message):
         iv = aes_ecb_encrypt(m, iv, nopad=True)
+
     return iv[:size]
 
 
@@ -40,7 +52,7 @@ def shitty_hash(message, iv=DEFAULT_IV):
     )
 
 
-def only_slightly_less_shitty_hash(message, iv=DEFAULT_IV):
+def stronger_hash(message, iv=DEFAULT_IV):
     return merkle_damgard(
         message=message,
         iv=iv,
@@ -49,49 +61,64 @@ def only_slightly_less_shitty_hash(message, iv=DEFAULT_IV):
 
 
 # @do_cprofile
-@clock
-def find_collision(H):
+# @clock
+def colliding_pair(H, f):
+    """
+    Just finds two things that collide with each other when they use H as the initial chaining block.
+
+    :param H: Initial state (the "IV")
+    :param f: The hashing function to use
+    """
 
     hashes = dict()
 
-    # look for another block that gets us the same result
     while True:
 
         r = random_bytes()
-        h = shitty_hash(r, H)
+        h = f(message=r, iv=H)
 
         if h in hashes and r != hashes[h]:
-
             return Collision(
                 a=r,
                 b=hashes[h],
                 initial_state=H,
                 resulting_hash=h)
-
         else:
             hashes[h] = r
 
 
-def gather_collisions(H):
-
+def gather_collisions(H, f):
+    """
+    This function yields collisions as soon as it finds them. This is a bit of a departure from the paper and the
+    suggestion in the text (which suggest gathering 2*t collisions) but it feels more natural to me. The collisions
+    returned only collide with each other; we're not trying to make a whole bunch of collisions with a single thing.
+    That part tripped me up at first -- I thought I wanted to find a whole bunch of things that ALL collide so I was
+    trying to force a collision with one thing. That's not what the paper is asking for. You just want to find pairs
+    that collide when they use the previous hash as their starting state.
+    """
     # find a single initial collision
-    collision = find_collision(H)
+    collision = colliding_pair(H, f)
+    yield collision
 
-    # find a bunch more collisions, advancing the state each time (why does advancing the state matter?)
+    # find a bunch more collisions, advancing the initial state (H) each time
     while True:
-        collision = find_collision(collision.resulting_hash)
+        collision = colliding_pair(collision.resulting_hash, f)
         yield collision
 
 
 def main():
     """
-    todo: Add writeup
+    This attack is about proving why it isn't safe to strengthen a hash by combining a weak hash and a stronger hash.
+    We're looking for "multi-collisions" -- which are inputs that collide in multiple hash functions. (Using two here.)
+    This method will produce a pair of inputs plus an initial state (IV, or H) that will collide under BOTH functions.
+    The average runtime is 2^b2-b1 calls to the function that generates colliding pairs, where b2 is the bitlength of
+    the stronger hash, and b1 is the bitlength of the weaker hash. For example, with b1 of 16 and b2 of 24, you'll
+    usually find a multi-collision in around 256 iterations. If you bump b2 up to 32 bits, it'll average 65536 runs.
     """
 
-    for c in gather_collisions(DEFAULT_IV):
-
-        a = only_slightly_less_shitty_hash(c.a, c.initial_state)
-        b = only_slightly_less_shitty_hash(c.b, c.initial_state)
+    for c in gather_collisions(DEFAULT_IV, shitty_hash):
+        a = stronger_hash(c.a, c.initial_state)
+        b = stronger_hash(c.b, c.initial_state)
 
         if a == b:
             print("Found collision in stronger hash")
@@ -158,6 +185,7 @@ Take hash functions f and g.
 Build h such that h(x) = f(x) || g(x).
 The idea is that if collisions in f cost 2^(b1/2) and collisions in g cost 2^(b2/2), collisions in h should come to
 the princely sum of 2^((b1+b2)/2).
+
 
 But now we know that's not true!
 
