@@ -61,7 +61,7 @@ def stronger_hash(message, iv=DEFAULT_IV):
 
 
 # @do_cprofile
-# @clock
+@clock
 def colliding_pair(H, f):
     """
     Just finds two things that collide with each other when they use H as the initial chaining block.
@@ -114,6 +114,10 @@ def main():
     The average runtime is 2^b2-b1 calls to the function that generates colliding pairs, where b2 is the bitlength of
     the stronger hash, and b1 is the bitlength of the weaker hash. For example, with b1 of 16 and b2 of 24, you'll
     usually find a multi-collision in around 256 iterations. If you bump b2 up to 32 bits, it'll average 65536 runs.
+
+    To be honest, I struggled with this one. I had a bunch of incorrect assumptions going into it, I got frustrated,
+    I made a dumb mistake with the runtime of finding colliding pairs, and I'm STILL not totally sure that this is what
+    I was supposed to produce. I'm like... 85% sure this is correct.
     """
 
     for c in gather_collisions(DEFAULT_IV, shitty_hash):
