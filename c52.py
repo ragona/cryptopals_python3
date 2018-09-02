@@ -28,8 +28,8 @@ class Collision:
 
 def merkle_damgard(message, iv, size):
     """
-    Variably shitty hash function. Use small sizes for easy collisions. 'iv' is equal to 'H' or the initial state
-    as described in the various papers on this topic.
+    Variably shitty iterative hash function. Use small sizes for easy collisions. 'iv' is equal to 'H' or the initial
+    state as described in the various papers on this topic. Note that message and IV are flipped from f(IV, m).
     """
 
     if len(iv) % 16 != 0:
@@ -38,7 +38,10 @@ def merkle_damgard(message, iv, size):
     if len(message) % 16 != 0:
         message = pad(message)
 
-    for m in chunks(message):
+    def chunks(n):
+        return (message[i: i + n] for i in range(0, len(message), n))
+
+    for m in chunks(16):
         iv = aes_ecb_encrypt(m, iv, nopad=True)
 
     return iv[:size]
@@ -52,19 +55,11 @@ def shitty_hash(message, iv=DEFAULT_IV):
     )
 
 
-def stronger_hash(message, iv=DEFAULT_IV):
-    return merkle_damgard(
-        message=message,
-        iv=iv,
-        size=3
-    )
-
-
 # @do_cprofile
 @clock
 def colliding_pair(H, f):
     """
-    Just finds two things that collide with each other when they use H as the initial chaining block.
+    Finds two things that collide with each other when they use H as the initial chaining block.
 
     :param H: Initial state (the "IV")
     :param f: The hashing function to use
@@ -90,11 +85,7 @@ def colliding_pair(H, f):
 def gather_collisions(H, f):
     """
     This function yields collisions as soon as it finds them. This is a bit of a departure from the paper and the
-    suggestion in the text (which suggest gathering 2*t collisions) but it feels more natural to me. The collisions
-    returned only collide with each other; we're not trying to make a whole bunch of collisions with a single thing.
-    That part tripped me up at first -- I thought I wanted to find a whole bunch of things that ALL collide so I was
-    trying to force a collision with one thing. That's not what the paper is asking for. You just want to find pairs
-    that collide when they use the previous hash as their starting state.
+    suggestion in the text (which suggest gathering 2^t collisions) but it feels more natural to me.
     """
     # find a single initial collision
     collision = colliding_pair(H, f)
@@ -120,19 +111,45 @@ def main():
     I was supposed to produce. I'm like... 85% sure this is correct.
     """
 
-    for c in gather_collisions(DEFAULT_IV, shitty_hash):
-        a = stronger_hash(c.a, c.initial_state)
-        b = stronger_hash(c.b, c.initial_state)
+    """
+    From Joux (pg. 4): f(f(IV, b0), b1) = f(f(IV, b0), b1') = f(f(IV, b0'), b1) = f(f(IV, b0'), b1') 
+    Note: non-prime (b0) represented by a in the Collision, prime (b0') represented by b.
+    """
+    def f(iv, message):
+        return merkle_damgard(
+            message=message,
+            iv=iv,
+            size=2)
+
+    C = gather_collisions(DEFAULT_IV, shitty_hash)
+    b0 = next(C)
+    b1 = next(C)
+
+    assert f(f(DEFAULT_IV, b0.a), b1.a) \
+        == f(f(DEFAULT_IV, b0.a), b1.b) \
+        == f(f(DEFAULT_IV, b0.b), b1.a) \
+        == f(f(DEFAULT_IV, b0.a), b1.b)
+
+    """
+    Prove this out by building a more expensive (but not too expensive) hash function to pair with the one you just 
+    used. Find a pair of messages that collide under both functions. Measure the total number of calls to the collision 
+    function.
+    """
+
+    def g(message, iv):
+        return merkle_damgard(
+            message=message,
+            iv=iv,
+            size=3
+        )
+
+    for c in gather_collisions(DEFAULT_IV, f):
+        a = g(c.a, c.initial_state)
+        b = g(c.b, c.initial_state)
 
         if a == b:
             print("Found collision in stronger hash")
             break
-
-
-def chunks(M):
-    msg_len = len(M)
-    for i in range(0, msg_len, 16):
-        yield M[i: i + 16]
 
 
 def random_bytes():
