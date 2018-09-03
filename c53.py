@@ -8,12 +8,18 @@ SIZE = 3
 
 
 class Collision:
-    def __init__(self, a, b, h_in, h_tmp, resulting_hash):
-        self.a = a
-        self.b = b
+    def __init__(self, m0, m1, h_in, h_tmp, result):
+        self.m0 = m0
+        self.m1 = m1
         self.h_in = h_in
         self.h_tmp = h_tmp
-        self.resulting_hash = resulting_hash
+        self.result = result
+
+    def __str__(self):
+        return f"Collision(m0={self.m0}, m1={self.m1}, h_in={self.h_in}, h_tmp={self.h_tmp}, result={self.result})"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 def F(iv, m):
@@ -72,26 +78,13 @@ def find_collision(num_blocks, iv):
         m = os.urandom(16)
         a = F(h_in, m)
         b = F(h_tmp, m)
+        A[a] = m
+        B[b] = m
 
         if a in B:
-            return Collision(
-                a=m,
-                b=B[a],
-                h_in=h_in,
-                h_tmp=h_tmp,
-                resulting_hash=a
-            )
+            return Collision(m0=m, m1=B[a], h_in=h_in, h_tmp=h_tmp, result=a)
         elif b in A:
-            return Collision(
-                a=A[b],
-                b=m,
-                h_in=h_in,
-                h_tmp=h_tmp,
-                resulting_hash=b
-            )
-        else:
-            A[a] = m
-            B[b] = m
+            return Collision(m0=A[b], m1=m, h_in=h_in, h_tmp=h_tmp, result=b)
 
 
 def make_expandable_message(h_in, k):
@@ -111,22 +104,33 @@ def make_expandable_message(h_in, k):
         3. Return the list of message pairs C.
     Work: k × 2n/2+1 + 2k ≈ k × 2 n/2+1 compression function calls.
     """
-    return 0
+    h_tmp = h_in
+    collisions = []
+    for i in range(k - 1):
+        c = find_collision(2*i + 1, h_tmp)
+        h_tmp = c.h_tmp
+        collisions.append(c)
+    return collisions
 
 
 def main():
     """
     todo: Writeup
     """
+
+    # test find_collision
     msg = (b'The major feature you want in your hash function is collision-resistance. That is, it should be hard to '
            b'generate collisions, and it should be really hard to generate a collision for a given hash.')
 
     h = F(DEFAULT_IV, msg)
     c = find_collision(num_blocks=len(msg) // 16, iv=DEFAULT_IV)
 
-    assert F(c.h_in, c.a) == F(c.h_tmp, c.b)
+    assert F(c.h_in, c.m0) == F(c.h_tmp, c.m1)
 
+    # test make_expandable_message
+    C = make_expandable_message(DEFAULT_IV, len(msg) // 16)
 
+    print(C)
 
 
 def bad_pad(m):
