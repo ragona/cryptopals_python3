@@ -94,6 +94,26 @@ def find_collision(num_blocks, iv):
             B[b] = m
 
 
+def make_expandable_message(h_in, k):
+    """
+    ALGORITHM: MakeExpandableMessage(h_in, k)
+    Make a (k, k + 2k − 1)-expandable message.
+    Variables:
+    1. h_tmp = the current intermediate hash value.
+    2. C = a list of pairs of messages of different lengths; C[i][0] is the first
+    message of pair i, while C[i][1] is that pair’s second message.
+    Steps:
+        1. Let h_tmp = h_in.
+        2. For i = 0 to k − 1:
+            – (m0, m1, h_tmp) = FindCollision(2i + 1, h_tmp)
+            – C[k − i − 1][0] = m0
+            – C[k − i − 1][1] = m1
+        3. Return the list of message pairs C.
+    Work: k × 2n/2+1 + 2k ≈ k × 2 n/2+1 compression function calls.
+    """
+    return 0
+
+
 def main():
     """
     todo: Writeup
@@ -104,8 +124,9 @@ def main():
     h = F(DEFAULT_IV, msg)
     c = find_collision(num_blocks=len(msg) // 16, iv=DEFAULT_IV)
 
-    print(F(c.h_in, c.a))
-    print(F(c.h_tmp, c.b))
+    assert F(c.h_in, c.a) == F(c.h_tmp, c.b)
+
+
 
 
 def bad_pad(m):
