@@ -47,14 +47,6 @@ def merkle_damgard(message, iv, size):
     return iv[:size]
 
 
-def shitty_hash(message, iv=DEFAULT_IV):
-    return merkle_damgard(
-        message=message,
-        iv=iv,
-        size=2
-    )
-
-
 # @do_cprofile
 @clock
 def colliding_pair(H, f):
@@ -121,7 +113,7 @@ def main():
             iv=iv,
             size=2)
 
-    C = gather_collisions(DEFAULT_IV, shitty_hash)
+    C = gather_collisions(H=DEFAULT_IV, f=f)
     b0 = next(C)
     b1 = next(C)
 
@@ -143,9 +135,9 @@ def main():
             size=3
         )
 
-    for c in gather_collisions(DEFAULT_IV, f):
-        a = g(c.a, c.initial_state)
-        b = g(c.b, c.initial_state)
+    for c in gather_collisions(H=DEFAULT_IV, f=f):
+        a = g(message=c.a, iv=c.initial_state)
+        b = g(message=c.b, iv=c.initial_state)
 
         if a == b:
             print("Found collision in stronger hash")
