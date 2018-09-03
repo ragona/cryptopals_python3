@@ -92,7 +92,6 @@ def gather_collisions(H, f):
 def main():
     """
     This attack is about proving why it isn't safe to strengthen a hash by combining a weak hash and a stronger hash.
-    We're looking for "multi-collisions" -- which are inputs that collide in multiple hash functions. (Using two here.)
     This method will produce a pair of inputs plus an initial state (IV, or H) that will collide under BOTH functions.
     The average runtime is 2^b2-b1 calls to the function that generates colliding pairs, where b2 is the bitlength of
     the stronger hash, and b1 is the bitlength of the weaker hash. For example, with b1 of 16 and b2 of 24, you'll
