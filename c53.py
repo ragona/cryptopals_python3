@@ -113,6 +113,63 @@ def make_expandable_message(h_in, k):
     return collisions
 
 
+def produce_message(C, k, L):
+    """
+    ALGORITHM: ProduceMessage(C, k, L)
+    Produce a message of length L, if possible, from the expandable message
+    specified by (C, k).
+
+    Variables:
+        1. L = desired message length.
+        2. k = parameter specifying that C contains a (k, k + 2k − 1)-expandable message.
+        3. C = a k × 2 array of message fragments of different lengths.
+        4. M = the message to be constructed.
+        5. T = a temporary variable holding the remaining length to be added.
+        6. S[0..k − 1] = a sequence of bits from T.
+        7. i = an integer counter.
+
+    Work: Negligible (about k table lookups and string copying operations).
+    """
+
+    """
+    1. Start with an empty message M = ∅.
+    """
+    M = b''
+
+    """
+    2. If L > 2^k + k − 1 or L < k, return an error condition.
+    """
+    if L > 2 ** k + k - 1:
+        raise ValueError(f"L is too big: L={L}, max={2 * k + k - 1}")
+
+    if L < k:
+        raise ValueError(f"L must be bigger than k: L={L}, k={k}")
+
+    """
+    3. Let T = L − k.
+    4. Let S = the bit sequence of T, from low-order to high-order bits.
+    """
+    T = L - k
+    S = f'{T:b}'.zfill(T)[::-1]  # binary representation, flip so low-order comes first
+
+    """
+    5. Concatenate message fragments from the expandable message together
+    until we get the desired message length. Note that this is very similar to
+    writing T in binary.
+        – for i = 0 to k − 1:
+            • if S[i] = 0 then M = M||C[i][0]
+            • else M = M||C[i][1]
+    6. Return M.
+    """
+    for i in range(k - 1):
+        if S[i] == '0':
+            M = M + C[i].m0
+        else:
+            M = M + C[i].m1
+
+    return M
+
+
 def main():
     """
     todo: Writeup
@@ -122,15 +179,17 @@ def main():
     msg = (b'The major feature you want in your hash function is collision-resistance. That is, it should be hard to '
            b'generate collisions, and it should be really hard to generate a collision for a given hash.')
 
+    k = len(msg) // 16 + 1
     h = F(DEFAULT_IV, msg)
-    c = find_collision(num_blocks=len(msg) // 16, iv=DEFAULT_IV)
+    c = find_collision(num_blocks=k, iv=DEFAULT_IV)
 
     assert F(c.h_in, c.m0) == F(c.h_tmp, c.m1)
 
     # test make_expandable_message
-    C = make_expandable_message(DEFAULT_IV, len(msg) // 16)
+    C = make_expandable_message(DEFAULT_IV, k)
 
-    print(C)
+    # produce message
+    M = produce_message(C, k, len(msg))
 
 
 def bad_pad(m):
@@ -160,7 +219,7 @@ block. But there are a ton of intermediate blocks, each with its own intermediat
 What if we could collide into one of those? We could then append all the following blocks from the original message
 to produce the original H(x). Almost.
 
-We can't do this exactly because the padding will mess th_ings up.
+We can't do this exactly because the padding will mess things up.
 
 What we need are expandable messages.
 
