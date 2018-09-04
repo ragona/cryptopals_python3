@@ -67,6 +67,8 @@ def find_collision(num_blocks, iv):
     4. Return colliding messages (M(i), q||q||...||q||M(j)), and the resulting intermediate
     hash F(h_in, M(i)).
     
+    Whoops -- I'm not doing that right ^^^^
+    
     Instead of building two giant lists and then looking for collisions after we're done (which is not guaranteed to 
     succeed, since 2^n/2 is just the average runtime) we'll do this using maps. This will return as soon as we find a 
     collision, and will keep looking if it takes more than 2^n/2 iterations.
@@ -170,6 +172,45 @@ def produce_message(C, k, L):
     return M
 
 
+def long_message_attack(target):
+    """
+    ALGORITHM: LongMessageAttack(Mtarget)
+    Find the second preimage for a message of 2^k + k + 1 blocks.
+
+    Variables:
+        1. Mtarget = the message for which a second preimage is to be found.
+        2. M_link = a message block used to link the expandable message to some
+        point in the target message’s sequence of intermediate hash values.
+        3. A = a list of intermediate hash values
+        4. h_exp = intermediate chaining value from processing an expandable message.
+
+    Steps:
+    1. C = MakeExpandableMessage(k)
+
+    2. h_exp = the intermediate hash value after processing the expandable message
+    in C.
+
+    3. Compute the intermediate hash values for Mtarget:
+        – h[−1] = the IV for the hash function
+        – m[i] = the ith message block of Mtarget.
+        – h[i] = F(h[i−1], m[i]), the ith intermediate hash output block. Note
+        that h will be organized in some searchable structure for the attack,
+        such as a hash table, and that elements h[0, 1, ..., k] are excluded
+        from the hash table, since the expandable message cannot be made
+        short enough to accommodate them in the attack.
+
+    4. Find a message block that links the expandable message to one of the
+    intermediate hash values for the target message after the kth block.
+        – Try linking messages M_link until F(h_exp, M_link) = h[j] for some k + 1 ≤ j ≤ 2^k + k + 1.
+
+    5. Use the expandable message to produce a message M∗ that is j−1 blocks long.
+
+    6. Return second preimage M∗||M_link||m[j + 1]||m[j + 2]...m[2^k + k + 1]
+    (if j = 2^k + k + 1, then no original message blocks are included in the
+    second preimage).
+    """
+
+
 def main():
     """
     todo: Writeup
@@ -179,7 +220,7 @@ def main():
     msg = (b'The major feature you want in your hash function is collision-resistance. That is, it should be hard to '
            b'generate collisions, and it should be really hard to generate a collision for a given hash.')
 
-    k = len(msg) // 16 + 1
+    k = len(msg) // 16 + 1  # todo: +1??
     h = F(DEFAULT_IV, msg)
     c = find_collision(num_blocks=k, iv=DEFAULT_IV)
 
