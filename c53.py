@@ -42,9 +42,8 @@ def find_collision(num_blocks, iv):
 
     Work: α − 1 + 2n/2+1 compression function calls
     """
-    q = os.urandom(16)
+    q = DEFAULT_IV
     h_in = iv
-    h_tmp = iv
 
     """
     1. Compute the starting hash for the α-block message by processing α − 1
@@ -53,10 +52,11 @@ def find_collision(num_blocks, iv):
         – For i = 0 to α − 2:
             • h_tmp = F(h_tmp, q)
     
-    We're priming the chaining value so that we can focus on the last block in step 2. 
+    We're priming the chaining value so that we can focus on the last block in step 2. (Note that this loop is just a 
+    Merkle-Damgard construction; we can use our existing F with a prefix of appropriate length.) 
     """
-    for i in range(num_blocks - 2):
-        h_tmp = F(h_tmp, q)
+    prefix = q * (num_blocks - 2)
+    h_tmp = F(h_in, prefix)
 
     """
     2. Build lists A and B as follows:
@@ -66,8 +66,6 @@ def find_collision(num_blocks, iv):
     3. Find i, j such that A[i] = B[j]
     4. Return colliding messages (M(i), q||q||...||q||M(j)), and the resulting intermediate
     hash F(h_in, M(i)).
-    
-    Whoops -- I'm not doing that right ^^^^
     
     Instead of building two giant lists and then looking for collisions after we're done (which is not guaranteed to 
     succeed, since 2^n/2 is just the average runtime) we'll do this using maps. This will return as soon as we find a 
@@ -84,9 +82,9 @@ def find_collision(num_blocks, iv):
         B[b] = m
 
         if a in B:
-            return Collision(m0=m, m1=B[a], h_in=h_in, h_tmp=h_tmp, result=a)
+            return Collision(m0=m, m1=prefix + B[a], h_in=h_in, h_tmp=h_tmp, result=a)
         elif b in A:
-            return Collision(m0=A[b], m1=m, h_in=h_in, h_tmp=h_tmp, result=b)
+            return Collision(m0=A[b], m1=prefix + m, h_in=h_in, h_tmp=h_tmp, result=b)
 
 
 def make_expandable_message(h_in, k):
@@ -220,17 +218,20 @@ def main():
     msg = (b'The major feature you want in your hash function is collision-resistance. That is, it should be hard to '
            b'generate collisions, and it should be really hard to generate a collision for a given hash.')
 
-    k = len(msg) // 16 + 1  # todo: +1??
-    h = F(DEFAULT_IV, msg)
+    # h = F(DEFAULT_IV, msg)
+    k = len(msg) // 16  # todo: +1??
     c = find_collision(num_blocks=k, iv=DEFAULT_IV)
 
-    assert F(c.h_in, c.m0) == F(c.h_tmp, c.m1)
+    assert F(c.h_in, c.m0) == F(c.h_in, c.m1)
 
     # test make_expandable_message
     C = make_expandable_message(DEFAULT_IV, k)
 
     # produce message
     M = produce_message(C, k, len(msg))
+
+    print(len(M))
+    print(len(msg))
 
 
 def bad_pad(m):
