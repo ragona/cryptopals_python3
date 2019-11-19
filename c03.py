@@ -38,8 +38,9 @@ def most_english_definition(s):
 
 
 def main():
-    s = unhexlify(b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
-    score, result = most_english_definition(s)
+    score, result = most_english_definition(
+      unhexlify(b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+    )
 
     assert result == "Cooking MC's like a pound of bacon"
 
