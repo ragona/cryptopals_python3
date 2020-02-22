@@ -12,7 +12,7 @@ def aes_ecb_encrypt(data, key, nopad=False):
 def aes_ecb_decrypt(data, key):
     return AES.new(key, AES.MODE_ECB).decrypt(data)
 
-
+ 
 def aes_cbc_encrypt(data, key, iv):
     data = pad(data, 16)
     cipher = AES.new(key, AES.MODE_ECB)
