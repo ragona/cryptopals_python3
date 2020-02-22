@@ -4,7 +4,7 @@ from functools import wraps
 from itertools import combinations
 from time import time
 import struct
-import cProfile
+import cProfile 
 
 #=====================
 # XOR AND SCORING 
